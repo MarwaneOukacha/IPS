@@ -1,0 +1,78 @@
+package com.paylogic.ama.iso20022.processor.outgoing;
+
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.core.utils.BaseCoreUtil.PAYMENT_ACTION;
+
+@Component
+public class OutgoingProcessorfactory {
+	private static final Logger LOG = Logger.getLogger(OutgoingProcessorfactory.class.getName());
+    @Autowired
+    private ApplicationContext applicationContext;
+    @Autowired
+	private HttpServletRequest httpRequest;
+    
+    public Payment processRequest(Payment incoming,MemberEndPoint ep) throws BusinessException, IOException {
+    	LOG.trace("processRequest::incoming "+incoming);
+    	OutgoingProcessor<?, ?> processor = getOutgoingProcessor(incoming.getIntent(),incoming.getAction());
+    	return processor.processRequest(incoming, ep,httpRequest);
+    }
+    
+	public OutgoingProcessor<?, ?> getOutgoingProcessor(String intent,PAYMENT_ACTION action) throws BusinessException{
+        if(StringUtil.isNullOrEmpty(intent)){
+            LOG.info("getOutgoingProcessor::missing intent");
+            throw new BusinessException("Missing intent");
+        }
+        Class<?> cls = null;
+        switch(intent) {
+        case CoreUtil.ACCOUNT_INQUIRY:
+        	cls = Acmt023OutgoingProcessor.class;
+        	break;
+        case CoreUtil.REQUEST_TO_PAY:
+        	cls = Pain013OutgoingProcessor.class;
+        	break;
+        case CoreUtil.DIRECT_DEBIT:
+        	if(PAYMENT_ACTION.INQUIRY.equals(action)) {
+        		cls = Pacs028OutgoingProcessor.class;
+        	}else {
+        		cls = PAYMENT_ACTION.SEND.equals(action) ? Pacs003OutgoingProcessor.class : Pacs002OutgoingProcessor.class;
+        	}
+        	break;
+        case CoreUtil.WALLET_TRANSFER:
+        case CoreUtil.WALLET_TO_ACCOUNT_TRANSFER:
+        case CoreUtil.ACCOUNT_TO_WALLET_TRANSFER:
+        case CoreUtil.BANK_ACCOUNT_TRANSFER:
+        case CoreUtil.MERCHANT_PURSHASE:
+        case CoreUtil.CARD_TRANSFER:
+        	if(PAYMENT_ACTION.INQUIRY.equals(action)) {
+        		cls = Pacs028OutgoingProcessor.class;
+        	}else {
+        		cls = PAYMENT_ACTION.SEND.equals(action) ? Pacs008OutgoingProcessor.class : Pacs002OutgoingProcessor.class;
+        	}
+        	break;
+        }
+        if(cls == null) {
+        	LOG.info("getOutgoingProcessor::invalid intent <"+intent+">");
+        	throw new BusinessException("Invalid intent");
+        }
+        try {
+        	return (OutgoingProcessor<?, ?>) applicationContext.getBean(cls.getSimpleName(),cls);
+        }catch(BeansException ex) {
+        	LOG.info("getOutgoingProcessor::Could not instantiate  processor for <"+intent+"> "+ex);
+        	throw new BusinessException("Invalid intent");
+        }
+    }
+}

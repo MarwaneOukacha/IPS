@@ -1,0 +1,17 @@
+package com.paylogic.ama.iso20022.bo.acmt;
+
+import javax.xml.bind.annotation.XmlTransient;
+
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+
+@XmlTransient
+public abstract class AcmtBaseDocument extends BaseDocument{
+	public abstract String getAssgneId();
+	public abstract String getAssgnrId();
+	public abstract String getVerificationId();
+	public abstract String getAccountId();
+	public AcmtBaseDocument() {
+		super();
+	}
+	
+}

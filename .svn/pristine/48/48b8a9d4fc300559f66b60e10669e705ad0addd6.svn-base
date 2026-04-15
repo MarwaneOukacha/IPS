@@ -1,0 +1,13 @@
+package com.paylogic.ama.iso20022.bo.pain;
+
+import javax.xml.bind.annotation.XmlTransient;
+
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+
+@XmlTransient
+public abstract class PainBaseDocument extends BaseDocument{
+	public PainBaseDocument() {
+		super();
+	}
+	
+}

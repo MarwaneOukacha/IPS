@@ -1,0 +1,127 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import java.io.IOException;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.ErrorStatus;
+import com.gms.utils.net.webinterface.WebRequest;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.bo.acmt023.DocumentAcmt023;
+import com.paylogic.ama.iso20022.converter.incoming.Acmt023IncomingConverter;
+import com.paylogic.ama.iso20022.converter.outgoing.Acmt024OutgoingConverter;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.iso20022.validator.Acmt023Validator;
+import com.paylogic.ama.core.exception.HostTimeOutException;
+import com.paylogic.ama.core.exception.HostUnreachableException;
+import com.paylogic.ama.core.exception.RemoteEndPointException;
+import com.paylogic.ama.core.iso20022.model.PaymentExtended;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.endpoint.monitor.HandlerMonitor;
+
+@Component("urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03")
+public class Acmt023IncomingProcessor extends IncomingProcessor<Payment, PaymentExtended>{
+	@Autowired
+	protected Acmt023IncomingConverter acmt023Converter;
+	@Autowired
+	protected Acmt024OutgoingConverter acmt024Converter;
+	@Autowired
+    protected HandlerMonitor handlerMonitor;
+
+	@Override
+	protected void validateRequest(BaseDocument document, MemberEndPoint destinationEndPoint) throws BusinessException {
+		DocumentAcmt023 incoming = (DocumentAcmt023) document;
+		Acmt023Validator.validate(incoming.getIdVrfctnReq());
+	}
+
+	@Override
+	protected Payment convertRequest(BaseDocument document, MemberEndPoint destinationEndPoint) {
+		DocumentAcmt023 incoming = (DocumentAcmt023) document;
+		Payment payment = acmt023Converter.convertAcmt023(incoming, destinationEndPoint.getParamCategories());
+		payment.setSendSourceHandler(handlerMonitor.getHandlerIden());
+		return payment;
+	}
+
+	@Override
+	protected PaymentExtended createRejectObject(String incoming, Exception ex, MemberEndPoint destinationEndPoint) {
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(ex.getClass().getSimpleName());
+		payment.setUpdateTime(new Date());
+		return payment;
+	}
+	
+	@Override
+	protected void validateResponse(PaymentExtended response, MemberEndPoint destinationEndPoint) throws BusinessException {
+		
+	}
+	
+	@Override
+	protected PaymentExtended handlerNotConnectedResponse(WebRequest webRequest, IOException ex) throws IOException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(HostUnreachableException.class.getSimpleName());
+		payment.setUpdateTime(new Date());
+		return payment;
+	}
+	
+	@Override
+	protected PaymentExtended handlerTimeoutResponse(WebRequest webRequest, IOException ex) throws IOException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_SUSPECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(HostTimeOutException.class.getSimpleName());
+		payment.setUpdateTime(new Date());
+		return payment;
+	}
+	
+	@Override
+	protected PaymentExtended handlerNotOkResponse(WebRequest webRequest) throws RemoteEndPointException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		ErrorStatus status = webRequest.getconvertedResponse(ErrorStatus.class);
+		if(status == null) {
+			//may be ama got core dump
+			status = ErrorStatus.INTERNAL_ERROR_STATUS;
+		}
+		payment.setRejectMessage(status.getErrorDescription());
+		payment.setRejectCode(status.getError());
+		payment.setUpdateTime(new Date());
+		return payment;
+	}
+	
+	@Override
+	protected PaymentExtended handleNullResponse(WebRequest webRequest) throws RemoteEndPointException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ErrorStatus.INTERNAL_ERROR_STATUS.getErrorDescription());
+		payment.setRejectCode(ErrorStatus.INTERNAL_ERROR_STATUS.getError());
+		payment.setUpdateTime(new Date());
+		return payment;
+	}
+
+	@Override
+	protected BaseDocument convertDocumentResponse(PaymentExtended response, BaseDocument initialRequest, MemberEndPoint destinationEndPoint) {
+		return acmt024Converter.convertFromPaymentResponse(response, destinationEndPoint.getParamCategories(),(DocumentAcmt023)initialRequest);
+	}
+	
+	@Override
+	protected Class<PaymentExtended> initP2Class() {
+		return PaymentExtended.class;
+	}
+	
+	@Override
+	protected Class<? extends BaseDocument> initRequestClass() {
+		return DocumentAcmt023.class;
+	}
+}

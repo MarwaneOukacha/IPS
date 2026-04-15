@@ -1,0 +1,71 @@
+package com.paylogic.ama.iso20022.validator;
+
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.exception.InvalidValueEx;
+import com.gms.utils.exception.MandatoryFieldEx;
+import com.paylogic.ama.iso20022.bo.pacs028.FIToFIPaymentStatusRequestV05;
+import com.paylogic.ama.iso20022.bo.pacs028.GroupHeader91;
+import com.paylogic.ama.iso20022.bo.pacs028.PaymentTransaction131;
+import com.paylogic.ama.core.exception.InvalidFromMemberEx;
+import com.paylogic.ama.core.exception.InvalidToMemberEx;
+
+public class Pacs028Validator {
+	private static final Logger LOG = Logger.getLogger(Pacs028Validator.class.getName());
+	
+	public static void validate(FIToFIPaymentStatusRequestV05 incoming) throws BusinessException {
+		//Header
+		validateHeader(incoming.getGrpHdr());
+		//Credit Info
+		List<PaymentTransaction131> trx = incoming.getTxInf();
+		if(trx == null) {
+			LOG.info("validateRequest::Transaction info is empty");
+			throw new MandatoryFieldEx("TxInf");
+		}
+		if(trx.size() != 1) {
+			LOG.info("validateRequest::transaction info size is different from 1");
+			throw new InvalidValueEx("TxInf", "1", trx.size());
+		}
+		if(StringUtil.isNullOrEmpty(trx.get(0).getOrgnlTxId()) && StringUtil.isNullOrEmpty(trx.get(0).getClrSysRef())) {
+			LOG.info("validateRequest::missing ClrSysRef and OrgnlTxId");
+			throw new MandatoryFieldEx("ClrSysRef or OrgnlTxId");
+		}
+	}
+
+	private static void validateHeader(GroupHeader91 header) throws BusinessException {
+		if(header == null) {
+			LOG.info("validateRequest::header is missing");
+			throw new MandatoryFieldEx("GrpHdr");
+		}
+		//Message Id
+		if(StringUtil.isNullOrEmpty(header.getMsgId())) {
+			LOG.info("validateRequest::message id is missing");
+			throw new MandatoryFieldEx("MsgId");
+		}
+		//create date and time
+		if(header.getCreDtTm() == null) {
+			LOG.info("validateRequest::creation date and time is missing");
+			throw new MandatoryFieldEx("CreDtTm");
+		}
+		//from member
+		if(header.getInstgAgt() == null 
+				|| header.getInstgAgt().getFinInstnId() == null 
+				|| header.getInstgAgt().getFinInstnId().getOthr() == null 
+				|| StringUtil.isNullOrEmpty(header.getInstgAgt().getFinInstnId().getOthr().getId())) {
+			LOG.info("validateRequest::missing from member");
+			throw new InvalidFromMemberEx("null");
+		}
+		//to member
+		if(header.getInstdAgt() == null 
+				|| header.getInstdAgt().getFinInstnId() == null 
+				|| header.getInstdAgt().getFinInstnId().getOthr() == null 
+				|| StringUtil.isNullOrEmpty(header.getInstdAgt().getFinInstnId().getOthr().getId())) {
+			LOG.info("validateRequest::missing to member");
+			throw new InvalidToMemberEx("null");
+		}
+	}
+}

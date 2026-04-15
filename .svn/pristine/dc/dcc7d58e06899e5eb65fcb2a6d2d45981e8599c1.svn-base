@@ -1,0 +1,87 @@
+package com.paylogic.ama.iso20022.processor.outgoing;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.log4j.Logger;
+
+import com.gms.utils.common.Pair;
+import com.gms.utils.common.ReflectionUtil;
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.exception.MandatoryFieldEx;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.endpoint.processor.SimpleWebProcessor;
+
+public abstract class OutgoingProcessor<P1 extends BaseDocument,P2 extends BaseDocument> extends SimpleWebProcessor<Payment, P1, P2, Payment>{
+	protected static final Logger LOG = Logger.getLogger(OutgoingProcessor.class.getName());
+	protected List<String> mandatoryFields = new ArrayList<>();
+	
+	@PostConstruct
+	public void init() {
+		initRequestMandatoryField();
+	}
+	
+	@Override
+	protected void validateRequest(Payment incoming, MemberEndPoint destinationEndPoint) throws BusinessException {
+		ReflectionUtil.checkMandatoryFields(incoming, mandatoryFields);
+		validateAccounts(incoming, destinationEndPoint);
+	}
+	
+	protected void validateAccounts(Payment payment, MemberEndPoint destinationEndPoint) throws MandatoryFieldEx {
+		validateSrcAccount(payment, destinationEndPoint);
+		validateDstAccount(payment, destinationEndPoint);
+	}
+	
+	protected void validateDstAccount(Payment payment, MemberEndPoint destinationEndPoint) throws MandatoryFieldEx {
+		Pair<String, String> receiver = CoreUtil.getPaymentAccountId(payment,destinationEndPoint.getParamCategories(),false);
+		String field = null;
+		if(receiver == null) {
+			field = CoreUtil.PAYMENT_DST_WALLET;
+		} else if(StringUtil.isNullOrEmpty(receiver.getLeft())) {
+			field = CoreUtil.ISO22_EWALLET_TYPE.equals(receiver.getRight()) ? CoreUtil.PAYMENT_DST_WALLET : CoreUtil.PAYMENT_DST_ACCOUNTS;	
+		}
+		if(!StringUtil.isNullOrEmpty(field)) {
+			LOG.info("validateAccounts::Missing "+field);
+			throw new MandatoryFieldEx(field);
+		}
+	}
+
+	protected void validateSrcAccount(Payment payment, MemberEndPoint destinationEndPoint) throws MandatoryFieldEx{
+		Pair<String, String> sender = CoreUtil.getPaymentAccountId(payment,destinationEndPoint.getParamCategories(),true);
+		String field = null;
+		if(sender == null ) {
+			if(CoreUtil.WALLET_TO_ACCOUNT_TRANSFER.equals(payment.getIntent()) || CoreUtil.WALLET_TRANSFER.equals(payment.getIntent()) ) {
+				field = CoreUtil.PAYMENT_SRC_WALLET;
+			}
+			//TODO merchant purchase
+			else {
+				field = CoreUtil.PAYMENT_SRC_ACCOUNTS;
+
+			}
+		} else if(StringUtil.isNullOrEmpty(sender.getLeft())) {
+			field = CoreUtil.ISO22_EWALLET_TYPE.equals(sender.getRight()) ? CoreUtil.PAYMENT_SRC_WALLET : CoreUtil.PAYMENT_SRC_ACCOUNTS;	
+		}
+		if(!StringUtil.isNullOrEmpty(field)) {
+			LOG.info("validateAccounts::Missing "+field);
+			throw new MandatoryFieldEx(field);
+		}
+	}
+	
+	protected void initRequestMandatoryField() {
+		mandatoryFields.add(CoreUtil.PAYMENT_ISS_TRXREF);
+		mandatoryFields.add(CoreUtil.PAYMENT_VOUCHER);
+		mandatoryFields.add(CoreUtil.PAYMENT_CREATE_TIME);
+		mandatoryFields.add(CoreUtil.PAYMENT_INTENT);
+		mandatoryFields.add(CoreUtil.PAYMENT_FROMMEMBER);
+		mandatoryFields.add(CoreUtil.PAYMENT_TOMEMBER);
+		mandatoryFields.add(CoreUtil.PAYMENT_AMOUNT);
+		mandatoryFields.add(CoreUtil.PAYMENT_CURRENCY);
+	}
+
+}

@@ -1,0 +1,247 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:33 PM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.pacs008;
+
+import java.math.BigDecimal;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import com.paylogic.ips.iso20022.bo.pacs.PacsBaseDocument;
+
+
+
+/**
+ * <p>Classe Java pour Document complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="Document"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="FIToFICstmrCdtTrf" type="{urn:iso:std:iso:20022:tech:xsd:pacs.008.001.11}FIToFICustomerCreditTransferV11"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlRootElement(
+	    name = "Document",
+	    namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.10"
+	)
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Document", propOrder = {
+    "fiToFICstmrCdtTrf"
+})
+public class DocumentPacs008 extends PacsBaseDocument{
+
+    @XmlElement(name = "FIToFICstmrCdtTrf", required = true)
+    protected FIToFICustomerCreditTransferV11 fiToFICstmrCdtTrf;
+    
+    public DocumentPacs008() {
+		super();
+	}
+    
+    /**
+     * Obtient la valeur de la propriété fiToFICstmrCdtTrf.
+     * 
+     * @return
+     *     possible object is
+     *     {@link FIToFICustomerCreditTransferV11 }
+     *     
+     */
+    public FIToFICustomerCreditTransferV11 getFIToFICstmrCdtTrf() {
+        return fiToFICstmrCdtTrf;
+    }
+
+    /**
+     * Définit la valeur de la propriété fiToFICstmrCdtTrf.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link FIToFICustomerCreditTransferV11 }
+     *     
+     */
+    public void setFIToFICstmrCdtTrf(FIToFICustomerCreditTransferV11 value) {
+        this.fiToFICstmrCdtTrf = value;
+    }
+
+	@Override
+	protected void initVersion() {
+		functionality = "pacs";
+		variant = "008";
+		version = "001.11";
+	}
+
+	@Override
+	public String getMsgId() {
+		return fiToFICstmrCdtTrf.grpHdr.msgId;
+	}
+
+	@Override
+	public XMLGregorianCalendar getCreDtTm() {
+		return fiToFICstmrCdtTrf.grpHdr.creDtTm;
+	}
+	
+	@Override
+	public String getInstgAgtId() {
+		if(fiToFICstmrCdtTrf.grpHdr.instgAgt != null && fiToFICstmrCdtTrf.grpHdr.instgAgt.finInstnId != null && fiToFICstmrCdtTrf.grpHdr.instgAgt.finInstnId.othr != null) {
+			return fiToFICstmrCdtTrf.grpHdr.instgAgt.finInstnId.othr.id;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getInstdAgtId() {
+		if(fiToFICstmrCdtTrf.grpHdr.instdAgt != null && fiToFICstmrCdtTrf.grpHdr.instdAgt.finInstnId != null && fiToFICstmrCdtTrf.grpHdr.instdAgt.finInstnId.othr != null) {
+			return fiToFICstmrCdtTrf.grpHdr.instdAgt.finInstnId.othr.id;
+		}else {
+			return null;
+		}
+	}
+
+	@Override
+	public String getTransactionId() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).pmtId != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).pmtId.txId;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getClearingSysRef() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).pmtId != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).pmtId.clrSysRef;
+		}else {
+			return null;
+		}
+	}
+
+	@Override
+	public BigDecimal getTransactionAmount() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).instdAmt != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).instdAmt.value;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getTransactionCurrency() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).instdAmt != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).instdAmt.ccy;
+		}else {
+			return null;
+		}
+	}	
+	
+	@Override
+	public BigDecimal getInterBankAmount() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).intrBkSttlmAmt != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).intrBkSttlmAmt.value;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getInterBankCurrency() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).intrBkSttlmAmt != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).intrBkSttlmAmt.ccy;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getDebtorAccountId() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id.othr != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id.othr.id;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getDebtorAccountScheme() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id.othr != null&& 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id.othr.schmeNm != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.id.othr.schmeNm.prtry;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getDebtorAccountCurrency() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).dbtrAcct.ccy;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getCreditorAccountId() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id.othr != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id.othr.id;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getCreditorAccountScheme() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id != null && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id.othr != null&& 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id.othr.schmeNm != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.id.othr.schmeNm.prtry;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getCreditorAccountCurrency() {
+		if(fiToFICstmrCdtTrf.cdtTrfTxInf != null && !fiToFICstmrCdtTrf.cdtTrfTxInf.isEmpty() && 
+		   fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct != null) {
+			return fiToFICstmrCdtTrf.cdtTrfTxInf.get(0).cdtrAcct.ccy;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String toString() {
+		return "DocumentPacs008 {'fiToFICstmrCdtTrf':'" + fiToFICstmrCdtTrf + "'}";
+	}
+}

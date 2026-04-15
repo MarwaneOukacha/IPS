@@ -1,0 +1,40 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- property holder -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		p:location="classpath:app.properties" />
+	<context:annotation-config />
+	<bean class="com.paylogic.ama.endpoint.processor.standard.StandardHandlerProcessor" id="handlerProcessor"/>
+	<bean class="com.paylogic.ama.endpoint.processor.standard.TokenProcessor" id="tokenProcessor"/>
+	<bean class="com.paylogic.ama.iso20022.store.IsoParameterStore" id="parameterStore"/>
+	<bean class="com.paylogic.ama.endpoint.monitor.HandlerMonitor" id="handlerMonitor">
+	   <property name="internalEndPoint" ref="internalEndPoint" />
+	   <property name="handlerProcessor" ref="handlerProcessor" />
+	   <property name="handlerIden" value="${handler.iden}"/>
+	   <property name="parameterStore" ref="parameterStore"/>
+	</bean>
+	
+	<bean class="com.paylogic.ama.core.bo.InternalEndPoint" name="internalEndPoint" scope="prototype">
+	   <property name="iden" value="${internal.iden:AMA}"/>
+	   <property name="label" value="${internal.label:AMA Internal channel}"/>
+	   <property name="initUrl" value="${internal.initurl}"/>
+	   <property name="authType" value="NONE"/>
+	   <property name="mediaType" value="${internal.mediatype:application/json}"/>
+	   <property name="acceptType" value="${internal.mediatype:application/json}"/>
+	   <property name="connectionTimeOut" value="${internal.connecttimeout:60}"/>
+	   <property name="readTimeOut" value="${internal.readtimeout:60}"/>
+	</bean>
+		<!--Scan dao and service package--> 
+	<context:component-scan base-package="com.paylogic.ama.iso20022.converter" />
+	<context:component-scan base-package="com.paylogic.ama.iso20022.processor" />
+ 	<context:annotation-config />
+</beans>

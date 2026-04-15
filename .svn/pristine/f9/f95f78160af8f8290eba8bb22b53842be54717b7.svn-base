@@ -1,0 +1,40 @@
+package com.paylogic.ama.iso20022.processor.outgoing;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.bo.pacs002.DocumentPacs002;
+import com.paylogic.ama.iso20022.bo.pacs003.DocumentPacs003;
+import com.paylogic.ama.iso20022.converter.incoming.Pacs002IncomingConverter;
+import com.paylogic.ama.iso20022.converter.outgoing.Pacs003OutgoingConverter;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+
+@Component("Pacs003OutgoingProcessor")
+public class Pacs003OutgoingProcessor extends OutgoingProcessor<DocumentPacs003, DocumentPacs002>{
+	@Autowired
+	private Pacs003OutgoingConverter pacs003Converter;
+	@Autowired
+	private Pacs002IncomingConverter pacs002Converter;
+
+	@Override
+	protected DocumentPacs003 convertRequest(Payment incoming, MemberEndPoint destinationEndPoint) {
+		return pacs003Converter.convertPayment(incoming, destinationEndPoint.getParamCategories());
+	}
+	
+	@Override
+	protected void validateResponse(DocumentPacs002 response, MemberEndPoint destinationEndPoint) throws BusinessException {
+		
+	}
+	
+	@Override
+	protected Payment convertResponse(DocumentPacs002 response, Payment initialRequest, MemberEndPoint destinationEndPoint) throws BusinessException { 
+		return pacs002Converter.convertToPaymentResponse(response, destinationEndPoint.getParamCategories(),initialRequest);
+	}
+	
+	@Override
+	protected Class<DocumentPacs002> initP2Class() {
+		return DocumentPacs002.class;
+	}
+}

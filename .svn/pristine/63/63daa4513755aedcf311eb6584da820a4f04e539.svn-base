@@ -1,0 +1,48 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.bo.pacs002.DocumentPacs002;
+import com.paylogic.ama.iso20022.converter.incoming.Pacs002IncomingConverter;
+import com.paylogic.ama.iso20022.validator.Pacs002Validator;
+import com.paylogic.ama.core.iso20022.model.PaymentExtended;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+
+@Component("urn:iso:std:iso:20022:tech:xsd:pacs.002.001.13")
+public class Pacs002IncomingProcessor extends Pacs008IncomingProcessor{
+	@Autowired
+	private Pacs002IncomingConverter pacs002IncomingConverter;
+
+	@Override
+	protected void validateRequest(BaseDocument document, MemberEndPoint destinationEndPoint) throws BusinessException {
+		DocumentPacs002 incoming = (DocumentPacs002) document;
+		Pacs002Validator.validate(incoming.getFIToFIPmtStsRpt());
+	}
+
+	@Override
+	protected Payment convertRequest(BaseDocument document, MemberEndPoint destinationEndPoint) {
+		DocumentPacs002 incoming = (DocumentPacs002) document;
+		Payment payment = null;
+		try {
+			payment = pacs002IncomingConverter.convertToUpdatePayment(incoming, destinationEndPoint.getParamCategories());
+			payment.setUpdateSourceHandler(handlerMonitor.getHandlerIden());
+		} catch (BusinessException e) {
+			LOG.info("convertRequest ::"+e.getMessage());
+		}
+		return payment;
+	}
+	
+	@Override
+	protected BaseDocument convertDocumentResponse(PaymentExtended response, BaseDocument initialRequest, MemberEndPoint destinationEndPoint) {
+		return pacs002Converter.convertFromPayment(response, destinationEndPoint.getParamCategories(),(DocumentPacs002)initialRequest);
+	}
+
+	@Override
+	protected Class<? extends BaseDocument> initRequestClass() {
+		return DocumentPacs002.class;
+	}
+}

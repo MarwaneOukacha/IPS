@@ -1,0 +1,54 @@
+package com.paylogic.ama.iso20022.processor.outgoing;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.exception.MandatoryFieldEx;
+import com.paylogic.ama.iso20022.bo.acmt023.DocumentAcmt023;
+import com.paylogic.ama.iso20022.bo.acmt024.DocumentAcmt024;
+import com.paylogic.ama.iso20022.converter.incoming.Acmt024IncomingConverter;
+import com.paylogic.ama.iso20022.converter.outgoing.Acmt023OutgoingConverter;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+
+@Component("Acmt023OutgoingProcessor")
+public class Acmt023OutgoingProcessor extends OutgoingProcessor<DocumentAcmt023, DocumentAcmt024>{
+	@Autowired
+	private Acmt023OutgoingConverter acmt023Converter;
+	@Autowired
+	private Acmt024IncomingConverter acmt024Converter;
+	
+	@Override
+	protected void initRequestMandatoryField() {
+		super.initRequestMandatoryField();
+		mandatoryFields.remove(CoreUtil.PAYMENT_AMOUNT);
+		mandatoryFields.remove(CoreUtil.PAYMENT_CURRENCY);
+	}
+	
+	@Override
+	protected DocumentAcmt023 convertRequest(Payment incoming, MemberEndPoint destinationEndPoint) {
+		return acmt023Converter.convertPayment(incoming, destinationEndPoint.getParamCategories());
+	}
+	
+	@Override
+	protected void validateSrcAccount(Payment payment, MemberEndPoint destinationEndPoint) throws MandatoryFieldEx {
+		//No need to validate source account
+	}
+	
+	@Override
+	protected void validateResponse(DocumentAcmt024 response, MemberEndPoint destinationEndPoint) throws BusinessException {
+		
+	}
+	
+	@Override
+	protected Payment convertResponse(DocumentAcmt024 response, Payment initialRequest, MemberEndPoint destinationEndPoint) throws BusinessException { 
+		return acmt024Converter.convertToPaymentResponse(response, destinationEndPoint.getParamCategories(),initialRequest);
+	}
+	
+	@Override
+	protected Class<DocumentAcmt024> initP2Class() {
+		return DocumentAcmt024.class;
+	}
+}

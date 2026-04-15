@@ -1,0 +1,72 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:30 PM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.pacs007;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.XmlType;
+import org.w3c.dom.Element;
+
+
+/**
+ * <p>Classe Java pour SupplementaryDataEnvelope1 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="SupplementaryDataEnvelope1"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;any processContents='lax'/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "SupplementaryDataEnvelope1", propOrder = {
+    "any"
+})
+public class SupplementaryDataEnvelope1 {
+
+    @XmlAnyElement(lax = true)
+    protected Object any;
+
+    /**
+     * Obtient la valeur de la propriété any.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Element }
+     *     {@link Object }
+     *     
+     */
+    public Object getAny() {
+        return any;
+    }
+
+    /**
+     * Définit la valeur de la propriété any.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Element }
+     *     {@link Object }
+     *     
+     */
+    public void setAny(Object value) {
+        this.any = value;
+    }
+
+}

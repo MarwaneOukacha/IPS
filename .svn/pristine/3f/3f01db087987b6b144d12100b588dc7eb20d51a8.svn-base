@@ -1,0 +1,47 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.bo.pacs003.DocumentPacs003;
+import com.paylogic.ama.iso20022.converter.incoming.Pacs003IncomingConverter;
+import com.paylogic.ama.iso20022.store.IsoParameterStore;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.iso20022.validator.Pacs003Validator;
+import com.paylogic.ama.core.iso20022.model.PaymentExtended;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+
+@Component("urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10")
+public class Pacs003IncomingProcessor extends Pacs008IncomingProcessor{
+	@Autowired
+	private Pacs003IncomingConverter pacs003Converter;
+	@Autowired
+	protected IsoParameterStore paramStore;
+	
+	@Override
+	protected void validateRequest(BaseDocument document, MemberEndPoint destinationEndPoint) throws BusinessException {
+		DocumentPacs003 incoming = (DocumentPacs003) document;
+		Pacs003Validator.validate(incoming.getFIToFICstmrDrctDbt(),CoreUtil.YES.equals(paramStore.getPacs003KycMandatory()));
+	}
+
+	@Override
+	protected Payment convertRequest(BaseDocument document, MemberEndPoint destinationEndPoint) {
+		DocumentPacs003 incoming = (DocumentPacs003) document;
+		Payment payment = pacs003Converter.convertPacs003(incoming, destinationEndPoint.getParamCategories());
+		payment.setSendSourceHandler(handlerMonitor.getHandlerIden());
+		return payment;
+	}
+	
+	@Override
+	protected BaseDocument convertDocumentResponse(PaymentExtended response, BaseDocument initialRequest, MemberEndPoint destinationEndPoint) {
+		return pacs002Converter.convertFromPayment(response, destinationEndPoint.getParamCategories(),(DocumentPacs003)initialRequest);
+	}
+
+	@Override
+	protected Class<? extends BaseDocument> initRequestClass() {
+		return DocumentPacs003.class;
+	}
+}

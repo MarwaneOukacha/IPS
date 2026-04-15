@@ -1,0 +1,58 @@
+package com.paylogic.ama.iso20022.controller;
+
+import java.io.IOException;
+
+import org.apache.log4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.ErrorStatus;
+import com.gms.utils.net.webinterface.WebRequest;
+import com.paylogic.ama.core.exception.RemoteEndPointException;
+
+@RestControllerAdvice
+public class GlobalDefaultExceptionHandler {
+	private static final Logger LOG = Logger.getLogger(GlobalDefaultExceptionHandler.class.getName());
+
+	@ResponseStatus(code=HttpStatus.NOT_FOUND)
+	@ResponseBody 
+	@ExceptionHandler(IOException.class)
+	public ErrorStatus handleException(IOException ex){
+		ErrorStatus status = new ErrorStatus(ex.getClass().getSimpleName(), ex.getMessage());
+		LOG.info("handleException::"+status);
+		return status;
+	}
+
+	@ResponseBody 
+	@ExceptionHandler(RemoteEndPointException.class)
+	public ResponseEntity<ErrorStatus> handleException(RemoteEndPointException ex){
+		ErrorStatus msg;
+		HttpStatus status = HttpStatus.valueOf(ex.getResponse().getResponseCode());
+		if(HttpStatus.INTERNAL_SERVER_ERROR == status){
+			msg = ErrorStatus.INTERNAL_ERROR_STATUS;
+		}else{
+			WebRequest req = new WebRequest();
+			msg = req.convertFromJson(ex.getResponse().getResponseMsg(), ErrorStatus.class);
+			if(msg == null) {
+				msg = new ErrorStatus(RemoteEndPointException.class.getSimpleName(), ex.getResponse().getResponseMsg());
+			}
+		}
+		LOG.info("handleException::status "+status+" msg "+msg);
+		return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON_UTF8).body(msg);
+	}
+
+	@ResponseStatus(code=HttpStatus.BAD_REQUEST)
+	@ResponseBody 
+	@ExceptionHandler(BusinessException.class)
+	public ErrorStatus handleException(BusinessException ex){
+		ErrorStatus status = new ErrorStatus(ex.getClass().getSimpleName(), ex.getMessage());
+		LOG.info("handleException::"+status);
+		return status;
+	}
+}

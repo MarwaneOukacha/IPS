@@ -1,0 +1,13 @@
+package com.paylogic.ama.iso20022.validator;
+
+
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.bo.pacs002.FIToFIPaymentStatusReportV13;
+
+
+public class Pacs002Validator {
+
+	public static void validate(FIToFIPaymentStatusReportV13 incoming) throws BusinessException {
+		
+	}
+}

@@ -1,0 +1,157 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:36 PM CAT 
+//
+
+
+package com.paylogic.ama.iso20022.bo.pain013;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour PaymentCondition1 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="PaymentCondition1"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="AmtModAllwd" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}TrueFalseIndicator"/&gt;
+ *         &lt;element name="EarlyPmtAllwd" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}TrueFalseIndicator"/&gt;
+ *         &lt;element name="DelyPnlty" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}Max140Text" minOccurs="0"/&gt;
+ *         &lt;element name="ImdtPmtRbt" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}AmountOrRate1Choice" minOccurs="0"/&gt;
+ *         &lt;element name="GrntedPmtReqd" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}TrueFalseIndicator"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "PaymentCondition1", propOrder = {
+    "amtModAllwd",
+    "earlyPmtAllwd",
+    "delyPnlty",
+    "imdtPmtRbt",
+    "grntedPmtReqd"
+})
+public class PaymentCondition1 {
+
+    @XmlElement(name = "AmtModAllwd")
+    protected boolean amtModAllwd;
+    @XmlElement(name = "EarlyPmtAllwd")
+    protected boolean earlyPmtAllwd;
+    @XmlElement(name = "DelyPnlty")
+    protected String delyPnlty;
+    @XmlElement(name = "ImdtPmtRbt")
+    protected AmountOrRate1Choice imdtPmtRbt;
+    @XmlElement(name = "GrntedPmtReqd")
+    protected boolean grntedPmtReqd;
+
+    /**
+     * Obtient la valeur de la propriété amtModAllwd.
+     * 
+     */
+    public boolean isAmtModAllwd() {
+        return amtModAllwd;
+    }
+
+    /**
+     * Définit la valeur de la propriété amtModAllwd.
+     * 
+     */
+    public void setAmtModAllwd(boolean value) {
+        this.amtModAllwd = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété earlyPmtAllwd.
+     * 
+     */
+    public boolean isEarlyPmtAllwd() {
+        return earlyPmtAllwd;
+    }
+
+    /**
+     * Définit la valeur de la propriété earlyPmtAllwd.
+     * 
+     */
+    public void setEarlyPmtAllwd(boolean value) {
+        this.earlyPmtAllwd = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété delyPnlty.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getDelyPnlty() {
+        return delyPnlty;
+    }
+
+    /**
+     * Définit la valeur de la propriété delyPnlty.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setDelyPnlty(String value) {
+        this.delyPnlty = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété imdtPmtRbt.
+     * 
+     * @return
+     *     possible object is
+     *     {@link AmountOrRate1Choice }
+     *     
+     */
+    public AmountOrRate1Choice getImdtPmtRbt() {
+        return imdtPmtRbt;
+    }
+
+    /**
+     * Définit la valeur de la propriété imdtPmtRbt.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link AmountOrRate1Choice }
+     *     
+     */
+    public void setImdtPmtRbt(AmountOrRate1Choice value) {
+        this.imdtPmtRbt = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété grntedPmtReqd.
+     * 
+     */
+    public boolean isGrntedPmtReqd() {
+        return grntedPmtReqd;
+    }
+
+    /**
+     * Définit la valeur de la propriété grntedPmtReqd.
+     * 
+     */
+    public void setGrntedPmtReqd(boolean value) {
+        this.grntedPmtReqd = value;
+    }
+
+}

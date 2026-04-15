@@ -1,0 +1,109 @@
+package com.paylogic.ips.util;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.TimeZone;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.apache.log4j.Logger;
+
+import com.gms.utils.common.DateUtil;
+import com.gms.utils.common.Pair;
+import com.gms.utils.common.StringUtil;
+import com.paylogic.ama.core.model.AccountInfo;
+import com.paylogic.ama.core.model.ParameterCategory;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.core.utils.BaseCoreUtil;
+
+public class CoreUtil extends BaseCoreUtil{
+	private static final Logger LOG = Logger.getLogger(CoreUtil.class.getName());
+	public static final String ISO22_ACCOUNT_TYPE = "ACCT";
+	public static final String ISO22_CARD_TYPE = "CARD";
+	public static final String ISO22_EWALLET_TYPE = "EWLT";
+	public static final List<String> VALID_ACC_TYPE = Arrays.asList(ISO22_ACCOUNT_TYPE,ISO22_EWALLET_TYPE,ACC_INFO_CARD);
+	public static final List<String> PACS008_VALID_INTENT = Arrays.asList(WALLET_TRANSFER,WALLET_TO_ACCOUNT_TRANSFER,ACCOUNT_TO_WALLET_TRANSFER,BANK_ACCOUNT_TRANSFER,MERCHANT_PURSHASE,CARD_TRANSFER);
+	public static final List<String> PACS003_VALID_INTENT = Arrays.asList(DIRECT_DEBIT);
+	public static final List<String> PAIN013_VALID_INTENT = Arrays.asList(REQUEST_TO_PAY);
+	public static final List<String> ACMT023_VALID_INTENT = Arrays.asList(ACCOUNT_INQUIRY);
+	public static final String INVALID_INPUT_MSG="Invalid input message";
+
+	public static final XMLGregorianCalendar convertDateToXmlGregorienDate(Date date,boolean includeTimeZone) throws DatatypeConfigurationException {
+		GregorianCalendar gl = includeTimeZone ? new GregorianCalendar() : new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+		gl.setTime(date);
+		return DatatypeFactory.newInstance().newXMLGregorianCalendar(gl);
+	}
+	
+	public static final Date getDateFromXmlGregorienDate(XMLGregorianCalendar xmlDate) {
+		return xmlDate.toGregorianCalendar().getTime();
+	}
+	
+	public static Pair<String, String> getPaymentAccountId(Payment payment, List<ParameterCategory> cats, boolean sender) {
+		String walletIden = null;
+		List<AccountInfo> accounts = null;
+		switch(payment.getIntent()) {
+		case CoreUtil.ACCOUNT_TO_WALLET_TRANSFER:
+			walletIden = sender ? null : payment.getWalletDestination();
+			accounts = sender ? payment.getSrcAccounts() : null;
+			break;
+		case CoreUtil.WALLET_TO_ACCOUNT_TRANSFER:
+			walletIden = sender ? payment.getWalletSource() : null;
+			accounts = sender ? null : payment.getDstAccounts();
+			break;
+		case CoreUtil.BANK_ACCOUNT_TRANSFER:
+			walletIden = null;
+			accounts = sender ? payment.getSrcAccounts() : payment.getDstAccounts();
+			break;
+		case CoreUtil.WALLET_TRANSFER:
+			walletIden = sender ? payment.getWalletSource() : payment.getWalletDestination();
+			accounts = null;
+			break;
+		case CoreUtil.ACCOUNT_INQUIRY:
+		case CoreUtil.CARD_TRANSFER:
+		case CoreUtil.MERCHANT_PURSHASE:
+		case CoreUtil.DIRECT_DEBIT:
+			// can be either for wallet or accounts
+			walletIden = sender ? payment.getWalletSource() : payment.getWalletDestination();
+			accounts = sender ? payment.getSrcAccounts() : payment.getDstAccounts();
+			break;
+			default:
+				//Intent is validated in processor
+				//we can not be here
+				LOG.info("getPaymentAccountId::unsupported intent "+payment.getIntent());
+				return null;
+		}
+		if(StringUtil.isNullOrEmpty(walletIden)) {
+			if(accounts != null && !accounts.isEmpty()) {
+				// MAP account type
+				String type;
+				if(ACC_INFO_CARD.equals(accounts.get(0).getType())) {
+					type = ISO22_CARD_TYPE;
+				}else {
+					type = ISO22_ACCOUNT_TYPE;
+				}
+				return new Pair<String, String>(accounts.get(0).getIden(), type);
+			}
+		}else {
+			return new Pair<String, String>(walletIden, CoreUtil.ISO22_EWALLET_TYPE);
+		}
+		return null;
+	}
+
+	public static XMLGregorianCalendar convertSessionIdToDate(String sessionId) {
+		int year = Integer.valueOf(sessionId.substring(0, 2));
+		int month = Integer.valueOf(sessionId.substring(2, 4));
+		int day = Integer.valueOf(sessionId.substring(4, 6));
+		int hour = Integer.valueOf(sessionId.substring(6, 8));
+		int minute = Integer.valueOf(sessionId.substring(8, 10));
+		try {
+			return CoreUtil.convertDateToXmlGregorienDate(DateUtil.generateDateTime(year, month, day, hour, minute, 0), true);
+		} catch (DatatypeConfigurationException e) {
+			LOG.info("convertSessionIdToDate::cannot convert "+e);
+			return null;
+		}
+	}
+}

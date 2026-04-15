@@ -1,0 +1,97 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:33 PM CAT 
+//
+
+
+package com.paylogic.ama.iso20022.bo.pacs028;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour AmountType4Choice complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="AmountType4Choice"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;choice&gt;
+ *         &lt;element name="InstdAmt" type="{urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05}ActiveOrHistoricCurrencyAndAmount"/&gt;
+ *         &lt;element name="EqvtAmt" type="{urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05}EquivalentAmount2"/&gt;
+ *       &lt;/choice&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "AmountType4Choice", propOrder = {
+    "instdAmt",
+    "eqvtAmt"
+})
+public class AmountType4Choice {
+
+    @XmlElement(name = "InstdAmt")
+    protected ActiveOrHistoricCurrencyAndAmount instdAmt;
+    @XmlElement(name = "EqvtAmt")
+    protected EquivalentAmount2 eqvtAmt;
+
+    /**
+     * Obtient la valeur de la propriété instdAmt.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ActiveOrHistoricCurrencyAndAmount }
+     *     
+     */
+    public ActiveOrHistoricCurrencyAndAmount getInstdAmt() {
+        return instdAmt;
+    }
+
+    /**
+     * Définit la valeur de la propriété instdAmt.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ActiveOrHistoricCurrencyAndAmount }
+     *     
+     */
+    public void setInstdAmt(ActiveOrHistoricCurrencyAndAmount value) {
+        this.instdAmt = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété eqvtAmt.
+     * 
+     * @return
+     *     possible object is
+     *     {@link EquivalentAmount2 }
+     *     
+     */
+    public EquivalentAmount2 getEqvtAmt() {
+        return eqvtAmt;
+    }
+
+    /**
+     * Définit la valeur de la propriété eqvtAmt.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link EquivalentAmount2 }
+     *     
+     */
+    public void setEqvtAmt(EquivalentAmount2 value) {
+        this.eqvtAmt = value;
+    }
+
+}

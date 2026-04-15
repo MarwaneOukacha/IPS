@@ -1,0 +1,29 @@
+package com.paylogic.ama.iso20022.bo.pacs;
+
+import java.math.BigDecimal;
+
+import javax.xml.bind.annotation.XmlTransient;
+
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+
+@XmlTransient
+public abstract class PacsBaseDocument extends BaseDocument{
+	public abstract String getInstgAgtId();
+	public abstract String getInstdAgtId();
+	public abstract String getTransactionId();
+	public abstract String getClearingSysRef();
+	public abstract BigDecimal getTransactionAmount();
+	public abstract String getTransactionCurrency();
+	public abstract BigDecimal getInterBankAmount();
+	public abstract String getInterBankCurrency();
+	public abstract String getDebtorAccountId();
+	public abstract String getDebtorAccountScheme();
+	public abstract String getDebtorAccountCurrency();
+	public abstract String getCreditorAccountId();
+	public abstract String getCreditorAccountScheme();
+	public abstract String getCreditorAccountCurrency();
+	public PacsBaseDocument() {
+		super();
+	}
+	
+}

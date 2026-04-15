@@ -1,0 +1,92 @@
+package com.paylogic.ama.iso20022.validator;
+
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.exception.InvalidValueEx;
+import com.gms.utils.exception.MandatoryFieldEx;
+import com.paylogic.ama.iso20022.bo.acmt023.IdentificationAssignment3;
+import com.paylogic.ama.iso20022.bo.acmt023.IdentificationInformation4;
+import com.paylogic.ama.iso20022.bo.acmt023.IdentificationVerification4;
+import com.paylogic.ama.iso20022.bo.acmt023.IdentificationVerificationRequestV03;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.exception.InvalidFromMemberEx;
+import com.paylogic.ama.core.exception.InvalidToMemberEx;
+
+public class Acmt023Validator {
+	private static final Logger LOG = Logger.getLogger(Acmt023Validator.class.getName());
+	
+	public static void validate(IdentificationVerificationRequestV03 incoming) throws BusinessException {
+		//Header
+		validateHeader(incoming.getAssgnmt());
+		//Credit Info
+		List<IdentificationVerification4> verifs = incoming.getVrfctn();
+		if(verifs == null) {
+			LOG.info("validateRequest::Verification list is empty");
+			throw new MandatoryFieldEx("Vrfctn");
+		}
+		if(verifs.size() != 1) {
+			LOG.info("validateRequest::Verification list size is different from 1");
+			throw new InvalidValueEx("Vrfctn", "1", verifs.size());
+		}
+		//validate destination account/wallet
+		validateAccount(verifs.get(0).getPtyAndAcctId());
+	}
+
+	private static void validateHeader(IdentificationAssignment3 header) throws BusinessException {
+		if(header == null) {
+			LOG.info("validateRequest::header is missing");
+			throw new MandatoryFieldEx("Assgnmt");
+		}
+		//Message Id
+		if(StringUtil.isNullOrEmpty(header.getMsgId())) {
+			LOG.info("validateRequest::message id is missing");
+			throw new MandatoryFieldEx("MsgId");
+		}
+		//create date and time
+		if(header.getCreDtTm() == null) {
+			LOG.info("validateRequest::creation date and time is missing");
+			throw new MandatoryFieldEx("CreDtTm");
+		}
+		//from member
+		if(header.getAssgnr() == null 
+				|| header.getAssgnr().getAgt() == null 
+				|| header.getAssgnr().getAgt().getFinInstnId() == null
+				|| header.getAssgnr().getAgt().getFinInstnId().getOthr() == null 
+				|| StringUtil.isNullOrEmpty(header.getAssgnr().getAgt().getFinInstnId().getOthr().getId())) {
+			LOG.info("validateRequest::missing from member");
+			throw new InvalidFromMemberEx("null");
+		}
+		//to member
+		if(header.getAssgne() == null 
+				|| header.getAssgne().getAgt() == null 
+				|| header.getAssgne().getAgt().getFinInstnId() == null
+				|| header.getAssgne().getAgt().getFinInstnId().getOthr() == null 
+				|| StringUtil.isNullOrEmpty(header.getAssgnr().getAgt().getFinInstnId().getOthr().getId())) {
+			LOG.info("validateRequest::missing from member");
+			throw new InvalidToMemberEx("null");
+		}
+	}
+	
+	private static void validateAccount(IdentificationInformation4 acc) throws BusinessException {
+		if(acc.getAcct() == null || 
+		   acc.getAcct().getId() == null ||
+		   acc.getAcct().getId().getOthr() == null ||
+		   StringUtil.isNullOrEmpty(acc.getAcct().getId().getOthr().getId())) {
+			LOG.info("validateRequest:: Account Id is missing");
+			throw new MandatoryFieldEx("Acct");
+		}
+		if(acc.getAcct().getId().getOthr().getSchmeNm() == null ||
+			StringUtil.isNullOrEmpty(acc.getAcct().getId().getOthr().getSchmeNm().getPrtry())) {
+			LOG.info("validateRequest::Account Type is missing");
+			throw new MandatoryFieldEx("SchmeNm");
+		}
+		if(!CoreUtil.VALID_ACC_TYPE.contains(acc.getAcct().getId().getOthr().getSchmeNm().getPrtry())) {
+			LOG.info("validateRequest::Account Type is invalid "+acc.getAcct().getId().getOthr().getSchmeNm().getPrtry());
+			throw new InvalidValueEx("SchmeNm", CoreUtil.VALID_ACC_TYPE, acc.getAcct().getId().getOthr().getSchmeNm().getPrtry());
+		}
+	}
+}

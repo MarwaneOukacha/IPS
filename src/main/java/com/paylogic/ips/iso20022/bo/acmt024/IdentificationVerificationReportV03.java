@@ -1,0 +1,171 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:35 PM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.acmt024;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour IdentificationVerificationReportV03 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="IdentificationVerificationReportV03"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="Assgnmt" type="{urn:iso:std:iso:20022:tech:xsd:acmt.024.001.03}IdentificationAssignment3"/&gt;
+ *         &lt;element name="OrgnlAssgnmt" type="{urn:iso:std:iso:20022:tech:xsd:acmt.024.001.03}MessageIdentification7" minOccurs="0"/&gt;
+ *         &lt;element name="Rpt" type="{urn:iso:std:iso:20022:tech:xsd:acmt.024.001.03}VerificationReport4" maxOccurs="unbounded"/&gt;
+ *         &lt;element name="SplmtryData" type="{urn:iso:std:iso:20022:tech:xsd:acmt.024.001.03}SupplementaryData1" maxOccurs="unbounded" minOccurs="0"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "IdentificationVerificationReportV03", propOrder = {
+    "assgnmt",
+    "orgnlAssgnmt",
+    "rpt",
+    "splmtryData"
+})
+public class IdentificationVerificationReportV03 {
+
+    @XmlElement(name = "Assgnmt", required = true)
+    protected IdentificationAssignment3 assgnmt;
+    @XmlElement(name = "OrgnlAssgnmt")
+    protected MessageIdentification7 orgnlAssgnmt;
+    @XmlElement(name = "Rpt", required = true)
+    protected List<VerificationReport4> rpt;
+    @XmlElement(name = "SplmtryData")
+    protected List<SupplementaryData1> splmtryData;
+
+    /**
+     * Obtient la valeur de la propriété assgnmt.
+     * 
+     * @return
+     *     possible object is
+     *     {@link IdentificationAssignment3 }
+     *     
+     */
+    public IdentificationAssignment3 getAssgnmt() {
+        return assgnmt;
+    }
+
+    /**
+     * Définit la valeur de la propriété assgnmt.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link IdentificationAssignment3 }
+     *     
+     */
+    public void setAssgnmt(IdentificationAssignment3 value) {
+        this.assgnmt = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété orgnlAssgnmt.
+     * 
+     * @return
+     *     possible object is
+     *     {@link MessageIdentification7 }
+     *     
+     */
+    public MessageIdentification7 getOrgnlAssgnmt() {
+        return orgnlAssgnmt;
+    }
+
+    /**
+     * Définit la valeur de la propriété orgnlAssgnmt.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link MessageIdentification7 }
+     *     
+     */
+    public void setOrgnlAssgnmt(MessageIdentification7 value) {
+        this.orgnlAssgnmt = value;
+    }
+
+    /**
+     * Gets the value of the rpt property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the rpt property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getRpt().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link VerificationReport4 }
+     * 
+     * 
+     */
+    public List<VerificationReport4> getRpt() {
+        if (rpt == null) {
+            rpt = new ArrayList<VerificationReport4>();
+        }
+        return this.rpt;
+    }
+
+    /**
+     * Gets the value of the splmtryData property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the splmtryData property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getSplmtryData().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link SupplementaryData1 }
+     * 
+     * 
+     */
+    public List<SupplementaryData1> getSplmtryData() {
+        if (splmtryData == null) {
+            splmtryData = new ArrayList<SupplementaryData1>();
+        }
+        return this.splmtryData;
+    }
+
+	@Override
+	public String toString() {
+		return "IdentificationVerificationReportV03 {'assgnmt':'" + assgnmt + "', 'orgnlAssgnmt':'" + orgnlAssgnmt
+				+ "', 'rpt':'" + rpt + "', 'splmtryData':'" + splmtryData + "'}";
+	}
+
+}

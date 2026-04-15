@@ -1,0 +1,39 @@
+package com.paylogic.ama.iso20022.processor.outgoing;
+
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.bo.pain013.DocumentPain013;
+import com.paylogic.ama.iso20022.bo.pain014.DocumentPain014;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.core.model.Payment;
+
+@Component("Pain013OutgoingProcessor")
+public class Pain013OutgoingProcessor extends OutgoingProcessor<DocumentPain013, DocumentPain014>{
+//	@Autowired
+//	private Pain013OutgoingConverter pain013Converter;
+//	@Autowired
+//	private Pain014IncomingConverter pain014Converter;
+	
+	@Override
+	protected DocumentPain013 convertRequest(Payment incoming, MemberEndPoint destinationEndPoint) {
+		//return pacs008Converter.convertPayment(incoming, destinationEndPoint.getParamCategories());
+		return null;
+	}
+	
+	@Override
+	protected void validateResponse(DocumentPain014 response, MemberEndPoint destinationEndPoint) throws BusinessException {
+		
+	}
+	
+	@Override
+	protected Payment convertResponse(DocumentPain014 response, Payment initialRequest, MemberEndPoint destinationEndPoint) throws BusinessException { 
+		//return pain014Converter.convertToPaymentResponse(response, destinationEndPoint.getParamCategories(),initialRequest);
+		return null;
+	}
+	
+	@Override
+	protected Class<DocumentPain014> initP2Class() {
+		return DocumentPain014.class;
+	}
+}

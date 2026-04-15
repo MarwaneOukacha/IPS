@@ -1,0 +1,86 @@
+package com.paylogic.ama.iso20022.controller;
+
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.Oauth2WebRequest;
+import com.gms.utils.net.webinterface.Token;
+import com.paylogic.ama.iso20022.processor.incoming.IncomingProcessorfactory;
+import com.paylogic.ama.iso20022.store.IsoParameterStore;
+import com.paylogic.ama.core.bo.InternalEndPoint;
+import com.paylogic.ama.core.bo.TokenRequest;
+import com.paylogic.ama.endpoint.processor.standard.TokenProcessor;
+
+@RestController
+@RequestMapping("/v1/external")
+public class ExternalController {
+	private static final Logger LOG = Logger.getLogger(ExternalController.class.getName());
+	@Autowired
+	private IncomingProcessorfactory incomingProcessorFactory;
+	@Autowired
+    private TokenProcessor tokenProcessor;
+	@Autowired
+	private HttpServletRequest httpRequest;
+	@Autowired
+	private IsoParameterStore parameterStore;
+
+	private InternalEndPoint internalTokenEP;
+	
+	@PostConstruct
+	public void init(){
+		internalTokenEP = new InternalEndPoint();
+        internalTokenEP.setConnectionTimeOut(parameterStore.getConnectTimeout());
+        internalTokenEP.setReadTimeOut(parameterStore.getReadTimeout());
+        internalTokenEP.setOauth2Url(parameterStore.getInternalOauth2Url());
+        internalTokenEP.setMediaType(parameterStore.getInternalMediaType());
+        internalTokenEP.setAcceptType(parameterStore.getInternalMediaType());
+        //set url to oauth2Url
+        internalTokenEP.setUrl(internalTokenEP.getOauth2Url());
+	}
+	
+	@PostMapping(value = "/send", consumes = MediaType.APPLICATION_XML_VALUE, produces=MediaType.APPLICATION_XML_VALUE)
+	public String send(@RequestBody String incoming) throws BusinessException,IOException {
+		LOG.info("send::incoming "+incoming);
+		return incomingProcessorFactory.processRequest(incoming);
+	}
+
+	@PostMapping(value = "/oauth/token"
+			,consumes=MediaType.APPLICATION_FORM_URLENCODED_VALUE
+			,produces=MediaType.APPLICATION_JSON_VALUE)
+	public Token getToken(@RequestBody MultiValueMap<String, String> tokenParams) throws BusinessException,IOException {
+		LOG.info("getToken::tokenParams "+tokenParams);
+		TokenRequest tokenRequest = buildTokenRequest(tokenParams);
+		//Postman cannot send scope in refresh request
+		//set it for now and remove it for production
+		if(StringUtil.isNullOrEmpty(tokenRequest.getScope())) {
+			tokenRequest.setScope("read");
+		}
+		return tokenProcessor.processRequest(tokenRequest, internalTokenEP,httpRequest);
+	}
+
+	private TokenRequest buildTokenRequest(MultiValueMap<String, String> tokenParams) {
+		TokenRequest tokenRequest = new TokenRequest();
+		tokenRequest.setClientId(tokenParams.getFirst(Oauth2WebRequest.CLIENT_ID));
+		tokenRequest.setClientSecret(tokenParams.getFirst(Oauth2WebRequest.CLIENT_SECRET));
+		tokenRequest.setGrantType(tokenParams.getFirst(Oauth2WebRequest.GRANT_TYPE));
+		tokenRequest.setPassword(tokenParams.getFirst(Oauth2WebRequest.PASSWORD_KEY));
+		tokenRequest.setScope(tokenParams.getFirst(Oauth2WebRequest.SCOPE_KEY));
+		tokenRequest.setUserName(tokenParams.getFirst(Oauth2WebRequest.USER_NAME));
+		tokenRequest.setRefreshToken(tokenParams.getFirst(Oauth2WebRequest.REFERSH_TOKEN));
+		return tokenRequest;
+	}
+
+}

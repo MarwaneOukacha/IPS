@@ -1,0 +1,47 @@
+package com.paylogic.ama.iso20022.converter.incoming;
+
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.paylogic.ama.iso20022.bo.pacs028.DocumentPacs028;
+import com.paylogic.ama.iso20022.bo.pacs028.FIToFIPaymentStatusRequestV05;
+import com.paylogic.ama.iso20022.bo.pacs028.GroupHeader91;
+import com.paylogic.ama.iso20022.bo.pacs028.PaymentTransaction131;
+import com.paylogic.ama.iso20022.bo.pacs028.SupplementaryData1;
+import com.paylogic.ama.iso20022.converter.DocumentConverter;
+import com.paylogic.ama.core.bo.filter.BasicPaymentFilter;
+import com.paylogic.ama.core.model.ParameterCategory;
+
+@Component
+public class Pacs028IncomingConverter extends DocumentConverter{
+
+	public BasicPaymentFilter convertPacs028(DocumentPacs028 document028,List<ParameterCategory> cats) {
+		BasicPaymentFilter filter = new BasicPaymentFilter();
+		filter.setAsAcquirer(true);
+		filter.setAsIssuer(true);
+		FIToFIPaymentStatusRequestV05 pacs028 = document028.getFIToFIPmtStsReq();
+		//process header
+		convertHeader(pacs028.getGrpHdr(),cats,filter);
+		//process Trx info
+		convertTransactionInfo(pacs028.getTxInf().get(0),cats,filter);
+		//process any supp data
+		convertSupplementaryData(pacs028.getSplmtryData(),cats,filter);
+		return filter;
+	}	
+
+	private void convertHeader(GroupHeader91 header, List<ParameterCategory> cats, BasicPaymentFilter filter) {
+		// Nothing to do, member is calculated automatically in ama
+	}
+	
+	private void convertTransactionInfo(PaymentTransaction131 txInf, List<ParameterCategory> cats, BasicPaymentFilter filter) {
+		//Issuer trx ref
+		filter.setPaymentReference(txInf.getOrgnlTxId());
+		//voucher code
+		filter.setVoucherCode(txInf.getClrSysRef());
+	}
+	
+	private void convertSupplementaryData(List<SupplementaryData1> splmtryData, List<ParameterCategory> cats, BasicPaymentFilter filter) {
+		//Nothing to do
+	}
+}

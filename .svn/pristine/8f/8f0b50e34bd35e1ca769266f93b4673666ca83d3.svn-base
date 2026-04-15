@@ -1,0 +1,163 @@
+package com.paylogic.ama.iso20022.converter.incoming;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.common.Pair;
+import com.gms.utils.common.StringUtil;
+import com.paylogic.ama.iso20022.bo.pacs003.DocumentPacs003;
+import com.paylogic.ama.iso20022.bo.pacs003.FIToFICustomerDirectDebitV10;
+import com.paylogic.ama.iso20022.bo.pacs003.GroupHeader98;
+import com.paylogic.ama.iso20022.bo.pacs003.ActiveOrHistoricCurrencyAndAmount;
+import com.paylogic.ama.iso20022.bo.pacs003.DirectDebitTransactionInformation30;
+import com.paylogic.ama.iso20022.bo.pacs003.FinancialInstitutionIdentification18;
+import com.paylogic.ama.iso20022.bo.pacs003.GenericAccountIdentification1;
+import com.paylogic.ama.iso20022.bo.pacs003.PartyIdentification135;
+import com.paylogic.ama.iso20022.bo.pacs003.SupplementaryData1;
+import com.paylogic.ama.iso20022.converter.DocumentConverter;
+import com.paylogic.ama.iso20022.store.IsoParameterStore;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.model.AccountInfo;
+import com.paylogic.ama.core.model.CustomerKyc;
+import com.paylogic.ama.core.model.ParameterCategory;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.core.utils.BaseCoreUtil.PAYMENT_ACTION;
+
+@Component
+public class Pacs003IncomingConverter extends DocumentConverter{
+	@Autowired
+	private IsoParameterStore handlerStore;
+	
+	public Payment convertPacs003(DocumentPacs003 document003,List<ParameterCategory> cats) {
+		Payment payment = new Payment();
+		payment.setAction(PAYMENT_ACTION.SEND);
+		FIToFICustomerDirectDebitV10 pacs003 = document003.getFIToFICstmrDrctDbt();
+		//process header
+		convertHeader(pacs003.getGrpHdr(),cats,payment);
+		//process credit info
+		convertCreditInfo(pacs003.getDrctDbtTxInf().get(0),cats,payment);
+		//process any supp data
+		convertSupplementaryData(pacs003.getSplmtryData(),cats,payment);
+		//set iso20022 message in additional data
+		includeMessage(document003,cats,payment,true);
+		return payment;
+	}	
+
+	private void convertHeader(GroupHeader98 header, List<ParameterCategory> cats, Payment payment) {
+		// create time
+		payment.setCreateTime(CoreUtil.getDateFromXmlGregorienDate(header.getCreDtTm()));
+		// from member
+		getMember(header.getInstgAgt().getFinInstnId(),cats,payment,true);
+		// to member
+		getMember(header.getInstdAgt().getFinInstnId(),cats,payment,false);
+		//intent
+		payment.setIntent(header.getPmtTpInf().getLclInstrm().getPrtry());
+	}
+	
+	private void convertCreditInfo(DirectDebitTransactionInformation30 dbtTrfTxInf, List<ParameterCategory> cats, Payment payment) {
+		//Issuer trx ref
+		payment.setIssuerTrxRef(dbtTrfTxInf.getPmtId().getTxId());
+		// transaction amount and currency
+		Pair<Double, String> amount = getPaymentAmount(dbtTrfTxInf.getInstdAmt(), handlerStore.getCurrencyMapping());
+		payment.setAmount(amount.getLeft());
+		payment.setCurrency(amount.getRight());
+		// set Sender & Receiver KYC
+		getCustomerKycFromPartyInfo(dbtTrfTxInf.getDbtr(), cats, true, payment);
+		getCustomerKycFromPartyInfo(dbtTrfTxInf.getCdtr(), cats, false, payment);
+		// set Sender and Receiver accounts
+		getAccountFromGenericAccountIdentification(dbtTrfTxInf.getDbtrAcct().getId().getOthr(),cats,true,payment);
+		getAccountFromGenericAccountIdentification(dbtTrfTxInf.getCdtrAcct().getId().getOthr(),cats,false,payment);
+		//ignore DbtrAgt it is already set from header
+		//ignore CdtrAgt it is already set from header
+		//Transaction description
+		if(dbtTrfTxInf.getRmtInf() != null && !dbtTrfTxInf.getRmtInf().getUstrd().isEmpty()) {
+			payment.setDescription(StringUtil.implode(dbtTrfTxInf.getRmtInf().getUstrd(), ';'));
+		}
+	}
+	
+	private void convertSupplementaryData(List<SupplementaryData1> splmtryData, List<ParameterCategory> cats, Payment payment) {
+		//Nothing to do
+	}
+	
+	private Pair<Double, String> getPaymentAmount(ActiveOrHistoricCurrencyAndAmount achAmount, Map<String, String> currencyMap) {
+		Pair<Double, String> amount = new Pair<>();
+		amount.setLeft(achAmount.getValue().doubleValue());
+		for(Entry<String, String> entry : currencyMap.entrySet()) {
+			if(achAmount.getCcy().equals(entry.getValue())) {
+				amount.setRight(entry.getKey());
+				break;
+			}
+		}
+		return amount;
+	}
+	
+	private void getMember(FinancialInstitutionIdentification18 finInstnId, List<ParameterCategory> cats, Payment payment, boolean fromMember) {
+		if(fromMember) {
+			payment.setFromMember(finInstnId.getOthr().getId()); 
+		}else {
+			payment.setToMember(finInstnId.getOthr().getId()); 
+		}
+	}
+	
+	private void getCustomerKycFromPartyInfo(PartyIdentification135 partyIden, List<ParameterCategory> cats,boolean sender,Payment payment) {
+		CustomerKyc kyc = new CustomerKyc();
+		String name = partyIden.getNm();
+		if(!StringUtil.isNullOrEmpty(name)) {
+			String fmt = CoreUtil.extractValuefromEpParam(cats, ISO22_KYC, NAME_COMPOSITION,DEFAULT_NAME_COMPOSITION);
+			int indexFirst  = fmt.indexOf("%f");
+			int indexMiddle = fmt.indexOf("%m");
+			int indexSecond = fmt.indexOf("%s");
+			String sep = CoreUtil.extractValuefromEpParam(cats, ISO22_KYC, NAME_SEPARATOR,DEFAULT_NAME_SEPARATOR);
+			String[] names = name.split(sep);
+			if(indexFirst >= 0 && indexFirst < names.length) {
+				kyc.setFirstname(names[indexFirst]);
+			}
+			if(indexSecond >= 0 && indexSecond < names.length) {
+				kyc.setSecondname(names[indexSecond]);
+			}
+			if(indexMiddle >= 0 && indexMiddle < names.length) {
+				kyc.setMiddlename(names[indexMiddle]);
+			}
+		}
+		if(partyIden.getPstlAdr() != null) {
+			kyc.setCity(partyIden.getPstlAdr().getTwnNm());
+			kyc.setCountry(partyIden.getPstlAdr().getCtry());
+			if(!partyIden.getPstlAdr().getAdrLine().isEmpty()) {
+				kyc.setAddress(StringUtil.implode(partyIden.getPstlAdr().getAdrLine(), '\n'));
+			}
+		}
+		if(sender) {
+			payment.setSenderCustomerData(kyc);
+		}else {
+			payment.setReceiverCustomerData(kyc);
+		}
+	}
+	
+	private void getAccountFromGenericAccountIdentification(GenericAccountIdentification1 othr, List<ParameterCategory> cats, boolean sender, Payment payment) {
+		String type = othr.getSchmeNm().getPrtry();
+		if(CoreUtil.ISO22_ACCOUNT_TYPE.equals(type)) {
+			AccountInfo accInfo = null;
+			accInfo = new AccountInfo();
+			accInfo.setIden(othr.getId());
+			accInfo.setType(CoreUtil.ACC_INFO_ACCOUNT);
+			if(sender) {
+				payment.setSrcAccounts(new ArrayList<>());
+				payment.getSrcAccounts().add(accInfo);
+			}else {
+				payment.setDstAccounts(new ArrayList<>());
+				payment.getDstAccounts().add(accInfo);
+			}
+		}else {
+			if(sender) {
+				payment.setWalletSource(othr.getId());
+			}else {
+				payment.setWalletDestination(othr.getId());
+			}
+		}
+	}
+}

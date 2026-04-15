@@ -1,0 +1,121 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.paylogic.ama.iso20022.exception.InvalidInputFile;
+import com.paylogic.ama.iso20022.store.IsoParameterStore;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.bo.InternalEndPoint;
+
+@Component
+public class IncomingProcessorfactory {
+	private static final Logger LOG = Logger.getLogger(IncomingProcessorfactory.class.getName());
+	private static final int schemaLength = 46;
+	private static final int startSchemaPos = 17;
+    private Map<String, Class<?>> processors = new HashMap<>();
+    private Map<String, InternalEndPoint> eps = new HashMap<>();
+    @Autowired
+    private ApplicationContext applicationContext;
+    @Autowired
+	private HttpServletRequest httpRequest;
+    @Autowired
+	private IsoParameterStore parameterStore;
+	private InternalEndPoint internalSendEP;
+	private InternalEndPoint internalUpdateEP;
+	private InternalEndPoint internalInquiryEP;
+    
+	@EventListener
+    public void onContextLoad(ContextRefreshedEvent event) throws BusinessException, IOException {
+		if(event.getApplicationContext().getParent() == null) {
+	    	internalSendEP = new InternalEndPoint();
+			internalSendEP.setConnectionTimeOut(parameterStore.getConnectTimeout());
+			internalSendEP.setReadTimeOut(parameterStore.getReadTimeout());
+			internalSendEP.setSendUrl(parameterStore.getInternalSendUrl());
+			internalSendEP.setMediaType(parameterStore.getInternalMediaType());
+			internalSendEP.setAcceptType(parameterStore.getInternalMediaType());
+			// set url to sendUrl
+			internalSendEP.setUrl(internalSendEP.getSendUrl());
+	
+			internalUpdateEP = new InternalEndPoint();
+			internalUpdateEP.setConnectionTimeOut(parameterStore.getConnectTimeout());
+			internalUpdateEP.setReadTimeOut(parameterStore.getReadTimeout());
+			internalUpdateEP.setUpdateUrl(parameterStore.getInternalUpdateUrl());
+			internalUpdateEP.setMediaType(parameterStore.getInternalMediaType());
+			internalUpdateEP.setAcceptType(parameterStore.getInternalMediaType());
+			//set url to updateUrl
+			internalUpdateEP.setUrl(internalUpdateEP.getUpdateUrl());
+	
+			internalInquiryEP = new InternalEndPoint();
+			internalInquiryEP.setConnectionTimeOut(parameterStore.getConnectTimeout());
+			internalInquiryEP.setReadTimeOut(parameterStore.getReadTimeout());
+			internalInquiryEP.setInquiryUrl(parameterStore.getInternalInquiryUrl());
+			internalInquiryEP.setMediaType(parameterStore.getInternalMediaType());
+			internalInquiryEP.setAcceptType(parameterStore.getInternalMediaType());
+			// set url to inquiryUrl
+			internalInquiryEP.setUrl(internalInquiryEP.getInquiryUrl());
+			//set maps
+			processors.put("urn:iso:std:iso:20022:tech:xsd:pacs.008.001.11",Pacs008IncomingProcessor.class);
+	    	processors.put("urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05",Pacs028IncomingProcessor.class);
+	    	processors.put("urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10",Pacs003IncomingProcessor.class);
+	    	processors.put("urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03",Acmt023IncomingProcessor.class);
+	    	processors.put("urn:iso:std:iso:20022:tech:xsd:pacs.002.001.13",Pacs002IncomingProcessor.class);
+	    	eps.put("urn:iso:std:iso:20022:tech:xsd:pacs.008.001.11",internalSendEP);
+	    	eps.put("urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10",internalSendEP);
+	    	eps.put("urn:iso:std:iso:20022:tech:xsd:pacs.002.001.13",internalUpdateEP);
+	    	eps.put("urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03",internalSendEP);
+	    	eps.put("urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05",internalInquiryEP);
+		}
+    }
+    
+    public String processRequest(String xmlIncoming) throws BusinessException, IOException {
+    	LOG.trace("processRequest::incoming "+xmlIncoming);
+    	//get schema
+    	if(StringUtil.isNullOrEmpty(xmlIncoming)) {
+    		LOG.info("processRequest::incoming null or empty");
+            throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+    	}
+    	if(xmlIncoming.length() < 65) {
+    		LOG.info("processRequest::incoming length is too low "+xmlIncoming.length());
+            throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+    	}
+    	String schema = xmlIncoming.substring(startSchemaPos, startSchemaPos + schemaLength);
+    	LOG.trace("processRequest:: schema is <"+schema+">");
+    	IncomingProcessor<?, ?> processor = getIncomingProcessor(schema);
+		InternalEndPoint ep = eps.get(schema);
+		LOG.trace("processRequest:: destination ep is "+ep);
+    	return processor.processRequest(xmlIncoming, ep,httpRequest);
+    }
+    
+	public IncomingProcessor<?, ?> getIncomingProcessor(String schema) throws BusinessException{
+        if(StringUtil.isNullOrEmpty(schema)){
+            LOG.info("getIncomingProcessor::missing schema");
+            throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+        }
+        Class<?> cls = processors.get(schema);
+        if(cls == null) {
+        	LOG.info("getIncomingProcessor::invalid schema <"+schema+">");
+        	throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+        }
+        try {
+        	String beanName = schema;
+        	return (IncomingProcessor<?, ?>) applicationContext.getBean(beanName,cls);
+        }catch(BeansException ex) {
+        	LOG.info("getIncomingProcessor::Could not instantiate  processor for <"+schema+"> "+ex);
+        	throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+        }
+    }
+}

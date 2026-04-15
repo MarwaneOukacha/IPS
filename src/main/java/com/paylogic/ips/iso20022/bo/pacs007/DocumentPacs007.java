@@ -1,0 +1,191 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:30 PM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.pacs007;
+
+import java.math.BigDecimal;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import com.paylogic.ips.iso20022.bo.pacs.PacsBaseDocument;
+
+
+
+/**
+ * <p>Classe Java pour Document complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="Document"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="FIToFIPmtRvsl" type="{urn:iso:std:iso:20022:tech:xsd:pacs.007.001.12}FIToFIPaymentReversalV12"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlRootElement(name="Document")
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "DocumentPacs007", propOrder = {
+    "fiToFIPmtRvsl"
+})
+public class DocumentPacs007 extends PacsBaseDocument{
+
+    @XmlElement(name = "FIToFIPmtRvsl", required = true)
+    protected FIToFIPaymentReversalV12 fiToFIPmtRvsl;
+
+    /**
+     * Obtient la valeur de la propriété fiToFIPmtRvsl.
+     * 
+     * @return
+     *     possible object is
+     *     {@link FIToFIPaymentReversalV12 }
+     *     
+     */
+    public FIToFIPaymentReversalV12 getFIToFIPmtRvsl() {
+        return fiToFIPmtRvsl;
+    }
+
+    /**
+     * Définit la valeur de la propriété fiToFIPmtRvsl.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link FIToFIPaymentReversalV12 }
+     *     
+     */
+    public void setFIToFIPmtRvsl(FIToFIPaymentReversalV12 value) {
+        this.fiToFIPmtRvsl = value;
+    }
+    @Override
+	protected void initVersion() {
+		functionality = "pacs";
+		variant = "007";
+		version = "001.12";
+	}
+
+	@Override
+	public String getMsgId() {
+		return fiToFIPmtRvsl.grpHdr.msgId;
+	}
+
+	@Override
+	public XMLGregorianCalendar getCreDtTm() {
+		return fiToFIPmtRvsl.grpHdr.creDtTm;
+	}
+	
+	@Override
+	public String getInstgAgtId() {
+		if(fiToFIPmtRvsl.grpHdr.instgAgt != null && fiToFIPmtRvsl.grpHdr.instgAgt.finInstnId != null && fiToFIPmtRvsl.grpHdr.instgAgt.finInstnId.othr != null) {
+			return fiToFIPmtRvsl.grpHdr.instgAgt.finInstnId.othr.id;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getInstdAgtId() {
+		if(fiToFIPmtRvsl.grpHdr.instdAgt != null && fiToFIPmtRvsl.grpHdr.instdAgt.finInstnId != null && fiToFIPmtRvsl.grpHdr.instdAgt.finInstnId.othr != null) {
+			return fiToFIPmtRvsl.grpHdr.instdAgt.finInstnId.othr.id;
+		}else {
+			return null;
+		}
+	}
+
+	@Override
+	public String getTransactionId() {
+		if(fiToFIPmtRvsl.txInf != null && !fiToFIPmtRvsl.txInf.isEmpty()) {
+			return fiToFIPmtRvsl.txInf.get(0).orgnlTxId;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getClearingSysRef() {
+		if(fiToFIPmtRvsl.txInf != null && !fiToFIPmtRvsl.txInf.isEmpty()) {
+			return fiToFIPmtRvsl.txInf.get(0).orgnlClrSysRef;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public BigDecimal getTransactionAmount() {
+		return null;
+	}
+	
+	@Override
+	public String getTransactionCurrency() {
+		return null;
+	}
+	
+	@Override
+	public BigDecimal getInterBankAmount() {
+		if(fiToFIPmtRvsl.txInf != null && !fiToFIPmtRvsl.txInf.isEmpty() && fiToFIPmtRvsl.txInf.get(0).orgnlIntrBkSttlmAmt != null) {
+			return fiToFIPmtRvsl.txInf.get(0).orgnlIntrBkSttlmAmt.value;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getInterBankCurrency() {
+		if(fiToFIPmtRvsl.txInf != null && !fiToFIPmtRvsl.txInf.isEmpty() && fiToFIPmtRvsl.txInf.get(0).orgnlIntrBkSttlmAmt != null) {
+			return fiToFIPmtRvsl.txInf.get(0).orgnlIntrBkSttlmAmt.ccy;
+		}else {
+			return null;
+		}
+	}
+	
+	@Override
+	public String getDebtorAccountId() {
+		return null;
+	}
+	
+	@Override
+	public String getDebtorAccountScheme() {
+		return null;
+	}
+	
+	@Override
+	public String getDebtorAccountCurrency() {
+		return null;
+	}
+	
+	@Override
+	public String getCreditorAccountId() {
+		return null;
+	}
+	
+	@Override
+	public String getCreditorAccountScheme() {
+		return null;
+	}
+	
+	@Override
+	public String getCreditorAccountCurrency() {
+		return null;
+	}
+	
+	@Override
+	public String toString() {
+		return "DocumentPacs007 {'fiToFIPmtRvsl':'" + fiToFIPmtRvsl + "'}";
+	}
+}

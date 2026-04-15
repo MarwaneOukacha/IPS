@@ -1,0 +1,145 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.ErrorStatus;
+import com.gms.utils.net.webinterface.WebRequest;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.bo.pacs028.DocumentPacs028;
+import com.paylogic.ama.iso20022.converter.incoming.Pacs028IncomingConverter;
+import com.paylogic.ama.iso20022.converter.outgoing.Pacs002OutgoingConverter;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.iso20022.validator.Pacs028Validator;
+import com.paylogic.ama.core.bo.filter.BasicPaymentFilter;
+import com.paylogic.ama.core.exception.HostUnreachableException;
+import com.paylogic.ama.core.exception.RemoteEndPointException;
+import com.paylogic.ama.core.iso20022.model.PaymentExtended;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.endpoint.monitor.HandlerMonitor;
+
+@Component("urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05")
+public class Pacs028IncomingProcessor extends IncomingProcessor<BasicPaymentFilter, List<PaymentExtended>>{
+	private static final List<PaymentExtended> dummy = new ArrayList<>();
+	@Autowired
+	private Pacs028IncomingConverter pacs028Converter;
+	@Autowired
+	private Pacs002OutgoingConverter pacs002Converter;
+	@Autowired
+    private HandlerMonitor handlerMonitor;
+	
+	@Override
+	protected void validateRequest(BaseDocument document, MemberEndPoint destinationEndPoint) throws BusinessException {
+		DocumentPacs028 incoming = (DocumentPacs028)document;
+		Pacs028Validator.validate(incoming.getFIToFIPmtStsReq());
+	}
+
+	@Override
+	protected BasicPaymentFilter convertRequest(BaseDocument document, MemberEndPoint destinationEndPoint) {
+		DocumentPacs028 incoming = (DocumentPacs028)document;
+		BasicPaymentFilter filter = pacs028Converter.convertPacs028(incoming, destinationEndPoint.getParamCategories());
+		filter.setHandler(handlerMonitor.getHandlerIden());
+		return filter;
+	}
+	
+	@Override
+	protected void validateResponse(List<PaymentExtended> response, MemberEndPoint destinationEndPoint) throws BusinessException {
+		
+	}
+	
+	@Override
+	protected List<PaymentExtended> createRejectObject(String incoming, Exception ex, MemberEndPoint destinationEndPoint) {
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(ex.getClass().getSimpleName());
+		payment.setUpdateTime(new Date());
+		List<PaymentExtended> list = new ArrayList<>();
+		list.add(payment);
+		return list;
+	}
+	
+	@Override
+	protected BaseDocument convertDocumentResponse(List<PaymentExtended> response, BaseDocument initialRequest, MemberEndPoint destinationEndPoint) {
+		return pacs002Converter.convertFromPayment(response.get(0), destinationEndPoint.getParamCategories(),(DocumentPacs028)initialRequest);	
+	}
+
+	@Override
+	protected List<PaymentExtended> handlerNotConnectedResponse(WebRequest webRequest, IOException ex) throws IOException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(HostUnreachableException.class.getSimpleName());
+		payment.setUpdateTime(new Date());
+		List<PaymentExtended> list = new ArrayList<>();
+		list.add(payment);
+		return list;
+	}
+	
+	@Override
+	protected List<PaymentExtended> extractOkResponse(WebRequest webRequest) {
+		return (List<PaymentExtended>) webRequest.convertCollectionFromJson(webRequest.getResponse().getResponseMsg(), PaymentExtended.class);
+	}
+	
+	@Override
+	protected List<PaymentExtended> handlerTimeoutResponse(WebRequest webRequest, IOException ex) throws IOException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ex.getMessage());
+		payment.setRejectCode(HostUnreachableException.class.getSimpleName());
+		payment.setUpdateTime(new Date());
+		List<PaymentExtended> list = new ArrayList<>();
+		list.add(payment);
+		return list;
+	}
+	
+	@Override
+	protected List<PaymentExtended> handlerNotOkResponse(WebRequest webRequest) throws RemoteEndPointException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		ErrorStatus status = webRequest.getconvertedResponse(ErrorStatus.class);
+		if(status == null) {
+			//may be ama got core dump
+			status = ErrorStatus.INTERNAL_ERROR_STATUS;
+		}
+		payment.setRejectMessage(status.getErrorDescription());
+		payment.setRejectCode(status.getError());
+		payment.setUpdateTime(new Date());
+		List<PaymentExtended> list = new ArrayList<>();
+		list.add(payment);
+		return list;
+	}
+	
+	@Override
+	protected List<PaymentExtended> handleNullResponse(WebRequest webRequest) throws RemoteEndPointException {
+		//return rejected Payment
+		PaymentExtended payment = new PaymentExtended();
+		payment.setState(CoreUtil.PAY_STATUS_REJECTED);
+		payment.setRejectMessage(ErrorStatus.INTERNAL_ERROR_STATUS.getErrorDescription());
+		payment.setRejectCode(ErrorStatus.INTERNAL_ERROR_STATUS.getError());
+		payment.setUpdateTime(new Date());
+		List<PaymentExtended> list = new ArrayList<>();
+		list.add(payment);
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Class<List<PaymentExtended>> initP2Class() {
+		return (Class<List<PaymentExtended>>) dummy.getClass();
+	}
+
+	@Override
+	protected Class<? extends BaseDocument> initRequestClass() {
+		return DocumentPacs028.class;
+	}
+}

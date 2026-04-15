@@ -1,0 +1,137 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.29 à 11:22:35 AM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.pacs003;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour FIToFICustomerDirectDebitV10 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="FIToFICustomerDirectDebitV10"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="GrpHdr" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}GroupHeader98"/&gt;
+ *         &lt;element name="DrctDbtTxInf" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}DirectDebitTransactionInformation30" maxOccurs="unbounded"/&gt;
+ *         &lt;element name="SplmtryData" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}SupplementaryData1" maxOccurs="unbounded" minOccurs="0"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "FIToFICustomerDirectDebitV10", propOrder = {
+    "grpHdr",
+    "drctDbtTxInf",
+    "splmtryData"
+})
+public class FIToFICustomerDirectDebitV10 {
+
+    @XmlElement(name = "GrpHdr", required = true)
+    protected GroupHeader98 grpHdr;
+    @XmlElement(name = "DrctDbtTxInf", required = true)
+    protected List<DirectDebitTransactionInformation30> drctDbtTxInf;
+    @XmlElement(name = "SplmtryData")
+    protected List<SupplementaryData1> splmtryData;
+
+    /**
+     * Obtient la valeur de la propriété grpHdr.
+     * 
+     * @return
+     *     possible object is
+     *     {@link GroupHeader98 }
+     *     
+     */
+    public GroupHeader98 getGrpHdr() {
+        return grpHdr;
+    }
+
+    /**
+     * Définit la valeur de la propriété grpHdr.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link GroupHeader98 }
+     *     
+     */
+    public void setGrpHdr(GroupHeader98 value) {
+        this.grpHdr = value;
+    }
+
+    /**
+     * Gets the value of the drctDbtTxInf property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the drctDbtTxInf property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getDrctDbtTxInf().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link DirectDebitTransactionInformation30 }
+     * 
+     * 
+     */
+    public List<DirectDebitTransactionInformation30> getDrctDbtTxInf() {
+        if (drctDbtTxInf == null) {
+            drctDbtTxInf = new ArrayList<DirectDebitTransactionInformation30>();
+        }
+        return this.drctDbtTxInf;
+    }
+
+    /**
+     * Gets the value of the splmtryData property.
+     * 
+     * <p>
+     * This accessor method returns a reference to the live list,
+     * not a snapshot. Therefore any modification you make to the
+     * returned list will be present inside the JAXB object.
+     * This is why there is not a <CODE>set</CODE> method for the splmtryData property.
+     * 
+     * <p>
+     * For example, to add a new item, do as follows:
+     * <pre>
+     *    getSplmtryData().add(newItem);
+     * </pre>
+     * 
+     * 
+     * <p>
+     * Objects of the following type(s) are allowed in the list
+     * {@link SupplementaryData1 }
+     * 
+     * 
+     */
+    public List<SupplementaryData1> getSplmtryData() {
+        if (splmtryData == null) {
+            splmtryData = new ArrayList<SupplementaryData1>();
+        }
+        return this.splmtryData;
+    }
+
+}

@@ -1,0 +1,261 @@
+package com.paylogic.ips.converter.outgoing;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.gms.utils.common.Pair;
+import com.gms.utils.common.StringUtil;
+import com.paylogic.ama.core.model.CustomerKyc;
+import com.paylogic.ama.core.model.ParameterCategory;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ips.converter.DocumentConverter;
+import com.paylogic.ips.iso20022.bo.pacs008.AccountIdentification4Choice;
+import com.paylogic.ips.iso20022.bo.pacs008.AccountSchemeName1Choice;
+import com.paylogic.ips.iso20022.bo.pacs008.ActiveCurrencyAndAmount;
+import com.paylogic.ips.iso20022.bo.pacs008.ActiveOrHistoricCurrencyAndAmount;
+import com.paylogic.ips.iso20022.bo.pacs008.BranchAndFinancialInstitutionIdentification6;
+import com.paylogic.ips.iso20022.bo.pacs008.CashAccount40;
+import com.paylogic.ips.iso20022.bo.pacs008.ChargeBearerType1Code;
+import com.paylogic.ips.iso20022.bo.pacs008.CreditTransferTransaction58;
+import com.paylogic.ips.iso20022.bo.pacs008.DocumentPacs008;
+import com.paylogic.ips.iso20022.bo.pacs008.FIToFICustomerCreditTransferV11;
+import com.paylogic.ips.iso20022.bo.pacs008.FinancialInstitutionIdentification18;
+import com.paylogic.ips.iso20022.bo.pacs008.GenericAccountIdentification1;
+import com.paylogic.ips.iso20022.bo.pacs008.GenericFinancialIdentification1;
+import com.paylogic.ips.iso20022.bo.pacs008.GroupHeader96;
+import com.paylogic.ips.iso20022.bo.pacs008.LocalInstrument2Choice;
+import com.paylogic.ips.iso20022.bo.pacs008.PartyIdentification135;
+import com.paylogic.ips.iso20022.bo.pacs008.PaymentIdentification13;
+import com.paylogic.ips.iso20022.bo.pacs008.PaymentTypeInformation28;
+import com.paylogic.ips.iso20022.bo.pacs008.PostalAddress24;
+import com.paylogic.ips.iso20022.bo.pacs008.Purpose2Choice;
+import com.paylogic.ips.iso20022.bo.pacs008.RemittanceInformation21;
+import com.paylogic.ips.iso20022.bo.pacs008.SettlementDateTimeIndication1;
+import com.paylogic.ips.iso20022.bo.pacs008.SettlementInstruction11;
+import com.paylogic.ips.iso20022.bo.pacs008.SettlementMethod1Code;
+import com.paylogic.ips.store.IsoParameterStore;
+import com.paylogic.ips.util.CoreUtil;
+
+@Component
+public class Pacs008OutgoingConverter extends DocumentConverter{
+	private static final Logger LOG = Logger.getLogger(Pacs008OutgoingConverter.class.getName());
+	private static final String ISO22_SETTLEMENT_CAT = "ISO22_SETTLEMENT_CAT";
+	private static final String SETTLEMENT_METHOD = "SETTLEMENT_METHOD";
+	private static final String DEFAULT_SETTLEMENT_METHODE = "CLRG";
+	private static final String ISO22_KYC = "ISO22_KYC";
+	private static final String NAME_COMPOSITION = "NAME_COMPOSITION";
+	private static final String DEFAULT_NAME_COMPOSITION = "%f %m %s";
+	@Autowired
+	IsoParameterStore handlerStore;
+	
+	public DocumentPacs008 convertPayment(Payment payment,List<ParameterCategory> cats) {
+		FIToFICustomerCreditTransferV11 pacs008 = new FIToFICustomerCreditTransferV11();
+		
+		//set header
+		pacs008.setGrpHdr(createHeader(payment,cats));
+		//set body
+		pacs008.getCdtTrfTxInf().add(createCreditTransfert(payment,cats));
+		//create document
+		DocumentPacs008 document = new DocumentPacs008();
+		document.setFIToFICstmrCdtTrf(pacs008);
+		//include message
+		includeMessage(document, cats, payment, false);
+		return document;
+	}
+	
+	private GroupHeader96 createHeader(Payment payment, List<ParameterCategory> cats) {
+		// setup header
+		GroupHeader96 groupHeader = new GroupHeader96();
+		groupHeader.setMsgId(payment.getIssuerTrxRef());
+		try {
+			groupHeader.setCreDtTm(CoreUtil.convertDateToXmlGregorienDate(payment.getCreateTime(),true));
+		} catch (DatatypeConfigurationException ex) {
+			LOG.info("createHeader::converting createTime error "+ex);
+			groupHeader.setCreDtTm(null);
+		}
+		groupHeader.setNbOfTxs("1");
+		// set Settlement
+		groupHeader.setSttlmInf(createSettlementInstruction(payment, cats));
+		// set Payment information
+		//header.setPmtTpInf(createPaymentInformation(payment,cats));
+		// set Instructing agent
+		//header.setInstgAgt(createFinancialInst(payment,cats,true));
+		// set Instructed agent
+		//header.setInstdAgt(createFinancialInst(payment,cats,false));
+		// settlement date
+		//session id = YYMMDDHHMI
+		/*if(!StringUtil.isNullOrEmpty(payment.getSessionId())) {
+			XMLGregorianCalendar date = CoreUtil.convertSessionIdToDate(payment.getSessionId());
+			header.setIntrBkSttlmDt(date);
+		}*/
+		return groupHeader;
+	}
+	
+	private CreditTransferTransaction58 createCreditTransfert(Payment payment, List<ParameterCategory> cats) {
+		CreditTransferTransaction58 crd = new CreditTransferTransaction58();
+		//Payment Information
+		crd.setPmtId(createPaymentIdentification(payment,cats));
+		//Set transaction Amount
+		//crd.setInstdAmt(createHistoricAmount(payment.getAmount(), payment.getCurrency(),handlerStore.getCurrencyMapping()));
+		//set settlement amount
+		crd.setIntrBkSttlmAmt(createActiveAmount(payment.getAmount(), payment.getCurrency()));
+		crd.setChrgBr(ChargeBearerType1Code.SLEV);
+		//set settlemnt date
+		//setSettlementDate(payment,crd);
+		//set Debtor
+		crd.setDbtr(createPaymentPartyInfo(payment,cats,true));
+		//set debtor account
+		crd.setDbtrAcct(createPaymentAccountInfo(payment,cats,true));
+		//set Debtor agent
+		crd.setDbtrAgt(createFinancialInst(payment,cats,true));
+		//set Creditor agent
+		crd.setCdtrAgt(createFinancialInst(payment, cats, false));
+		//set creditor
+		crd.setCdtr(createPaymentPartyInfo(payment,cats,false));
+		//set creditor account
+		crd.setCdtrAcct(createPaymentAccountInfo(payment,cats,false));
+		Purpose2Choice Prtry=new Purpose2Choice();
+		String motif=payment.getDescription();
+		if(!StringUtil.isNullOrEmpty(motif)) {
+			Prtry.setPrtry(motif);
+			crd.setPurp(Prtry);
+			RemittanceInformation21 remInf = new RemittanceInformation21();
+			remInf.getUstrd().add(payment.getDescription());
+			crd.setRmtInf(remInf);
+		}
+		
+		//Remittance info
+		/*
+		if(!StringUtil.isNullOrEmpty(payment.getDescription())) {
+			RemittanceInformation21 remInf = new RemittanceInformation21();
+			remInf.getUstrd().add(payment.getDescription());
+			crd.setRmtInf(remInf);
+		}*/
+		return crd;
+	}
+
+
+	private void setSettlementDate(Payment payment, CreditTransferTransaction58 crd) {
+		if(StringUtil.isNullOrEmpty(payment.getSessionId())) {
+			LOG.info("setSettlementDate::mission session id");
+			return;
+		}
+		//session id = YYMMDDHHMI
+		if(!StringUtil.isNullOrEmpty(payment.getSessionId())) {
+			XMLGregorianCalendar date = CoreUtil.convertSessionIdToDate(payment.getSessionId());
+			SettlementDateTimeIndication1 settlement = new SettlementDateTimeIndication1();
+			settlement.setCdtDtTm(date);
+			settlement.setDbtDtTm(date);
+			crd.setSttlmTmIndctn(settlement);
+		}
+	}
+
+	private SettlementInstruction11 createSettlementInstruction(Payment payment, List<ParameterCategory> cats) {
+		// set Settlement method
+		SettlementInstruction11 setlmnt = new SettlementInstruction11();
+		SettlementMethod1Code method = SettlementMethod1Code.CLRG;
+		//String value = CoreUtil.extractValuefromEpParam(cats, ISO22_SETTLEMENT_CAT, SETTLEMENT_METHOD,DEFAULT_SETTLEMENT_METHODE);
+		//method = SettlementMethod1Code.fromValue(value);
+		LOG.trace("createSettlementInstruction::settlement method is "+method);
+		setlmnt.setSttlmMtd(method);
+		return setlmnt;		
+	}
+	
+	private PaymentTypeInformation28 createPaymentInformation(Payment payment, List<ParameterCategory> cats) {
+		PaymentTypeInformation28 paymentInfo = new PaymentTypeInformation28();
+		LocalInstrument2Choice localInstr = new LocalInstrument2Choice();
+		localInstr.setPrtry(payment.getIntent());
+		paymentInfo.setLclInstrm(localInstr);
+		return paymentInfo;
+	}
+	
+	private PaymentIdentification13 createPaymentIdentification(Payment payment, List<ParameterCategory> cats) {
+		PaymentIdentification13 ident = new PaymentIdentification13();
+		ident.setTxId(payment.getIssuerTrxRef());
+		ident.setEndToEndId("NOTPROVIDED");
+		//ident.setClrSysRef(payment.getVoucherCode());
+		return ident;
+	}
+	
+	private BranchAndFinancialInstitutionIdentification6 createFinancialInst(Payment payment, List<ParameterCategory> cats, boolean isFrom) {
+		BranchAndFinancialInstitutionIdentification6 inst = new BranchAndFinancialInstitutionIdentification6();
+		FinancialInstitutionIdentification18 iden = new FinancialInstitutionIdentification18();
+		GenericFinancialIdentification1 gfi = new GenericFinancialIdentification1(); 
+		gfi.setId(isFrom ? payment.getFromMember() : payment.getToMember());
+		iden.setOthr(gfi);
+		inst.setFinInstnId(iden);
+		return inst;
+	}
+	
+	private ActiveOrHistoricCurrencyAndAmount createHistoricAmount(Double amount, String isoCurr,Map<String, String> currencyMap) {
+		ActiveOrHistoricCurrencyAndAmount amnt = new ActiveOrHistoricCurrencyAndAmount();
+		amnt.setValue(BigDecimal.valueOf(amount));
+		amnt.setCcy(currencyMap.get(isoCurr));
+		return amnt;
+	}
+	
+	private ActiveCurrencyAndAmount createActiveAmount(Double amount, String isoCurr,Map<String, String> currencyMap) {
+		ActiveCurrencyAndAmount amnt = new ActiveCurrencyAndAmount();
+		amnt.setValue(BigDecimal.valueOf(amount));
+		amnt.setCcy(currencyMap.get(isoCurr));
+		return amnt;
+	}
+	private ActiveCurrencyAndAmount createActiveAmount(Double amount, String isoCurr) {
+		ActiveCurrencyAndAmount amnt = new ActiveCurrencyAndAmount();
+		amnt.setValue(BigDecimal.valueOf(amount));
+		amnt.setCcy(isoCurr);
+		return amnt;
+	}
+	
+	private CashAccount40 createPaymentAccountInfo(Payment payment, List<ParameterCategory> cats, boolean sender) {
+		CashAccount40 acc = new CashAccount40();
+		AccountIdentification4Choice accId = new AccountIdentification4Choice();
+		accId.setOthr(getGenericPaymentAccInfo(payment,cats,sender));
+		acc.setId(accId);	
+		return acc;
+	}
+	
+	private GenericAccountIdentification1 getGenericPaymentAccInfo(Payment payment, List<ParameterCategory> cats, boolean sender) {
+		GenericAccountIdentification1 generic = new GenericAccountIdentification1();
+		Pair<String, String> accInfo = CoreUtil.getPaymentAccountId(payment,cats,sender);
+		generic.setId(accInfo.getLeft());
+		AccountSchemeName1Choice schemaName = new AccountSchemeName1Choice();
+		schemaName.setPrtry(accInfo.getRight());
+		generic.setSchmeNm(schemaName);
+		return generic;
+	}
+	
+	private PartyIdentification135 createPaymentPartyInfo(Payment payment, List<ParameterCategory> cats,boolean sender) {
+		PartyIdentification135 partyIden = new PartyIdentification135();
+		CustomerKyc kyc = sender ? payment.getSenderCustomerData() : payment.getReceiverCustomerData();
+		//Set kyc info
+		if(kyc != null) {
+			partyIden.setNm(getNameFromKyc(kyc,cats));
+			if(!StringUtil.isNullOrEmpty(kyc.getAddress()) || !StringUtil.isNullOrEmpty(kyc.getCountry()) || !StringUtil.isNullOrEmpty(kyc.getCity())) {
+				PostalAddress24 adr = new PostalAddress24();
+				adr.setCtry(kyc.getCountry());
+				adr.setTwnNm(kyc.getCity());
+				adr.getAdrLine().add(kyc.getAddress());
+				partyIden.setPstlAdr(adr);
+			}
+		}
+		return partyIden;
+	}
+	
+	private String getNameFromKyc(CustomerKyc customerData,List<ParameterCategory> cats) {
+		//String fmt = CoreUtil.extractValuefromEpParam(cats, ISO22_KYC, NAME_COMPOSITION,DEFAULT_NAME_COMPOSITION);
+		String fmt = DEFAULT_NAME_COMPOSITION;
+		fmt = fmt.replaceAll("%f", StringUtil.isNullOrEmpty(customerData.getFirstname()) ? "":customerData.getFirstname());
+		fmt = fmt.replaceAll("%m", StringUtil.isNullOrEmpty(customerData.getMiddlename()) ? "":customerData.getMiddlename());
+		fmt = fmt.replaceAll("%s", StringUtil.isNullOrEmpty(customerData.getSecondname()) ? "":customerData.getSecondname());
+		return StringUtil.nullIfEmpty(fmt);
+	}
+}

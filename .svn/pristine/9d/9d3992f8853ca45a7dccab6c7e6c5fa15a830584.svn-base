@@ -1,0 +1,127 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.29 à 11:22:35 AM CAT 
+//
+
+
+package com.paylogic.ama.iso20022.bo.pacs003;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlSchemaType;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour SettlementInstruction14 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="SettlementInstruction14"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="SttlmMtd" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}SettlementMethod2Code"/&gt;
+ *         &lt;element name="SttlmAcct" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}CashAccount40" minOccurs="0"/&gt;
+ *         &lt;element name="ClrSys" type="{urn:iso:std:iso:20022:tech:xsd:pacs.003.001.10}ClearingSystemIdentification3Choice" minOccurs="0"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "SettlementInstruction14", propOrder = {
+    "sttlmMtd",
+    "sttlmAcct",
+    "clrSys"
+})
+public class SettlementInstruction14 {
+
+    @XmlElement(name = "SttlmMtd", required = true)
+    @XmlSchemaType(name = "string")
+    protected SettlementMethod2Code sttlmMtd;
+    @XmlElement(name = "SttlmAcct")
+    protected CashAccount40 sttlmAcct;
+    @XmlElement(name = "ClrSys")
+    protected ClearingSystemIdentification3Choice clrSys;
+
+    /**
+     * Obtient la valeur de la propriété sttlmMtd.
+     * 
+     * @return
+     *     possible object is
+     *     {@link SettlementMethod2Code }
+     *     
+     */
+    public SettlementMethod2Code getSttlmMtd() {
+        return sttlmMtd;
+    }
+
+    /**
+     * Définit la valeur de la propriété sttlmMtd.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link SettlementMethod2Code }
+     *     
+     */
+    public void setSttlmMtd(SettlementMethod2Code value) {
+        this.sttlmMtd = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété sttlmAcct.
+     * 
+     * @return
+     *     possible object is
+     *     {@link CashAccount40 }
+     *     
+     */
+    public CashAccount40 getSttlmAcct() {
+        return sttlmAcct;
+    }
+
+    /**
+     * Définit la valeur de la propriété sttlmAcct.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link CashAccount40 }
+     *     
+     */
+    public void setSttlmAcct(CashAccount40 value) {
+        this.sttlmAcct = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété clrSys.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ClearingSystemIdentification3Choice }
+     *     
+     */
+    public ClearingSystemIdentification3Choice getClrSys() {
+        return clrSys;
+    }
+
+    /**
+     * Définit la valeur de la propriété clrSys.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ClearingSystemIdentification3Choice }
+     *     
+     */
+    public void setClrSys(ClearingSystemIdentification3Choice value) {
+        this.clrSys = value;
+    }
+
+}

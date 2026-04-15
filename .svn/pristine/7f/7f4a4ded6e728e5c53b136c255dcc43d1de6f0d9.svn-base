@@ -1,0 +1,41 @@
+package com.paylogic.ama.iso20022.controller;
+
+import java.io.IOException;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.exception.MandatoryFieldEx;
+import com.paylogic.ama.iso20022.processor.outgoing.OutgoingProcessorfactory;
+import com.paylogic.ama.core.exception.RemoteEndPointException;
+import com.paylogic.ama.core.model.Payment;
+
+@RestController
+@RequestMapping("/v1/internal")
+public class InternalController {
+    private static final Logger LOG = Logger.getLogger(InternalController.class.getName());
+    @Autowired
+    private OutgoingProcessorfactory outgoingFactory;
+       
+    @PostMapping(value = "/forward",produces=MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public Payment forward(@RequestBody Payment payment) throws BusinessException,IOException {
+        LOG.info("forward::payment "+payment);
+        if(payment.getMep1() == null){
+            LOG.info("forward::principal end point is null");
+            throw new MandatoryFieldEx("principal end point");
+        }
+        try{
+        	return outgoingFactory.processRequest(payment, payment.getMep1());
+        }catch(RemoteEndPointException ex){
+            //TODO route only if remote mep1 is not connected
+        	LOG.info("forward::"+ex.getMessage());
+            throw ex;
+        }
+    }
+}

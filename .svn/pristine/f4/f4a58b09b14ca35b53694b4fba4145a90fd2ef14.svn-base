@@ -1,0 +1,162 @@
+package com.paylogic.ama.cbe.iso20022.converter;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.apache.log4j.Logger;
+import org.junit.Test;
+
+import com.gms.utils.net.webinterface.WebRequest;import com.paylogic.ama.core.exception.RemoteEndPointException;
+import com.paylogic.ama.core.model.Payment;
+import com.paylogic.ama.iso20022.bo.acmt024.DocumentAcmt024;
+import com.paylogic.ama.iso20022.bo.pacs008.DocumentPacs008;
+import com.paylogic.ama.iso20022.converter.incoming.Acmt024IncomingConverter;
+
+public class TestConvertion {
+	private static final Logger LOG = Logger.getLogger(TestConvertion.class.getName());
+	private static final String pacs008="<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.11\">"
+			+ "    <FIToFICstmrCdtTrf>"
+			+ "        <GrpHdr>"
+			+ "            <CreDtTm>1970-01-20T17:54:03.303+02:00</CreDtTm>"
+			+ "            <NbOfTxs>1</NbOfTxs>"
+			+ "            <SttlmInf>"
+			+ "                <SttlmMtd>CLRG</SttlmMtd>"
+			+ "            </SttlmInf>"
+			+ "            <PmtTpInf>"
+			+ "                <LclInstrm>"
+			+ "                    <Prtry>mobile_transfer</Prtry>"
+			+ "                </LclInstrm>"
+			+ "            </PmtTpInf>"
+			+ "            <InstgAgt>"
+			+ "                <FinInstnId>"
+			+ "                    <Othr>"
+			+ "                        <Id>100010</Id>"
+			+ "                    </Othr>"
+			+ "                </FinInstnId>"
+			+ "            </InstgAgt>"
+			+ "            <InstdAgt>"
+			+ "                <FinInstnId>"
+			+ "                    <Othr>"
+			+ "                        <Id>4521023</Id>"
+			+ "                    </Othr>"
+			+ "                </FinInstnId>"
+			+ "            </InstdAgt>"
+			+ "        </GrpHdr>"
+			+ "        <CdtTrfTxInf>"
+			+ "            <PmtId/>"
+			+ "            <IntrBkSttlmAmt>150.0</IntrBkSttlmAmt>"
+			+ "            <InstdAmt>150.0</InstdAmt>"
+			+ "            <ChrgBr>SLEV</ChrgBr>"
+			+ "            <Dbtr/>"
+			+ "            <DbtrAcct>"
+			+ "                <Id>"
+			+ "                    <Othr>"
+			+ "                        <Id>000000000</Id>"
+			+ "                        <SchmeNm>"
+			+ "                            <Prtry>EWLT</Prtry>"
+			+ "                        </SchmeNm>"
+			+ "                    </Othr>"
+			+ "                </Id>"
+			+ "            </DbtrAcct>"
+			+ "            <DbtrAgt>"
+			+ "                <FinInstnId>"
+			+ "                    <Othr>"
+			+ "                        <Id>100010</Id>"
+			+ "                    </Othr>"
+			+ "                </FinInstnId>"
+			+ "            </DbtrAgt>"
+			+ "            <CdtrAgt>"
+			+ "                <FinInstnId>"
+			+ "					   <IBAN>testIban</IBAN>"
+			+ "                    <Othr>"
+			+ "                        <Id>4521023</Id>"
+			+ "                    </Othr>"
+			+ "                </FinInstnId>"
+			+ "            </CdtrAgt>"
+			+ "            <Cdtr/>"
+			+ "            <CdtrAcct>"
+			+ "                <Id>"
+			+ "                    <Othr>"
+			+ "                        <Id>11111111</Id>"
+			+ "                        <SchmeNm>"
+			+ "                            <Prtry>EWLT</Prtry>"
+			+ "                        </SchmeNm>"
+			+ "                    </Othr>"
+			+ "                </Id>"
+			+ "            </CdtrAcct>"
+			+ "        </CdtTrfTxInf>"
+			+ "    </FIToFICstmrCdtTrf>"
+			+ "</Document>"; 
+	@Test
+	public void testDocumentPacs008() {
+		WebRequest request = new WebRequest();
+		DocumentPacs008 env= request.convertFromXML(pacs008, DocumentPacs008.class);
+		LOG.info("env::"+env);
+		assertNotNull(env);
+		assertNotNull(env.getFIToFICstmrCdtTrf());
+		assertNotNull(env.getFIToFICstmrCdtTrf().getCdtTrfTxInf().get(0).getDbtrAcct());
+		assertNotNull(env.getFIToFICstmrCdtTrf().getCdtTrfTxInf().get(0).getDbtrAcct().getId());
+		assertNotNull(env.getFIToFICstmrCdtTrf().getCdtTrfTxInf().get(0).getDbtrAcct().getId().getOthr());
+		assertEquals(env.getFIToFICstmrCdtTrf().getCdtTrfTxInf().get(0).getDbtrAcct().getId().getOthr().getId(),"000000000");
+	}
+	
+	@Test
+	public void testAcmt024Converter() throws RemoteEndPointException {
+		String acmt024="<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:acmt.024.001.03\">"
+				+ "	<IdVrfctnRpt>"
+				+ "		<Assgnmt>"
+				+ "			<MsgId>165d2be2-97e4-4e68-b301-c4eec1fe4243</MsgId>"
+				+ "			<CreDtTm>2024-07-11T14:35:19.199+02:00</CreDtTm>"
+				+ "			<Assgnr>"
+				+ "				<Agt>"
+				+ "					<FinInstnId>"
+				+ "						<Othr>"
+				+ "							<Id>101001</Id>"
+				+ "						</Othr>"
+				+ "					</FinInstnId>"
+				+ "				</Agt>"
+				+ "			</Assgnr>"
+				+ "			<Assgne>"
+				+ "				<Agt>"
+				+ "					<FinInstnId>"
+				+ "						<Othr>"
+				+ "							<Id>103001</Id>"
+				+ "						</Othr>"
+				+ "					</FinInstnId>"
+				+ "				</Agt>"
+				+ "			</Assgne>"
+				+ "		</Assgnmt>"
+				+ "		<OrgnlAssgnmt>"
+				+ "			<MsgId>165d2be2-97e4-4e68-b301-c4eec1fe4243</MsgId>"
+				+ "			<CreDtTm>2024-07-11T14:35:19.199+02:00</CreDtTm>"
+				+ "		</OrgnlAssgnmt>"
+				+ "		<Rpt>"
+				+ "			<OrgnlId></OrgnlId>"
+				+ "			<Vrfctn>true</Vrfctn>"
+				+ "			<OrgnlPtyAndAcctId>"
+				+ "				<Acct>"
+				+ "					<Id>"
+				+ "						<Othr>"
+				+ "							<Id>77605476521</Id>"
+				+ "							<SchmeNm>"
+				+ "								<Prtry>ACCT</Prtry>"
+				+ "							</SchmeNm>"
+				+ "						</Othr>"
+				+ "					</Id>"
+				+ "				</Acct>"
+				+ "			</OrgnlPtyAndAcctId>"
+				+ "			<UpdtdPtyAndAcctId>"
+				+ "				<Pty></Pty>"
+				+ "			</UpdtdPtyAndAcctId>"
+				+ "		</Rpt>"
+				+ "	</IdVrfctnRpt>"
+				+ "</Document>";
+		Acmt024IncomingConverter converter = new Acmt024IncomingConverter();
+		WebRequest request = new WebRequest();
+		DocumentAcmt024 doc = request.convertFromXML(acmt024, DocumentAcmt024.class);
+		Payment initial = new Payment();
+		initial.setVoucherCode("123456");
+		Payment result = converter.convertToPaymentResponse(doc, null, initial);
+		assertNotNull(result);
+	}
+}

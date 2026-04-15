@@ -1,0 +1,84 @@
+package com.paylogic.ama.iso20022.processor.incoming;
+
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.WebRequest;
+import com.paylogic.ama.iso20022.bo.BaseDocument;
+import com.paylogic.ama.iso20022.exception.InvalidInputFile;
+import com.paylogic.ama.iso20022.util.CoreUtil;
+import com.paylogic.ama.core.model.MemberEndPoint;
+import com.paylogic.ama.endpoint.processor.SimpleWebProcessor;
+
+public abstract class IncomingProcessor<P1,P2> extends SimpleWebProcessor<String, P1, P2, String>{
+	protected static final Logger LOG = Logger.getLogger(IncomingProcessor.class.getName());
+	protected Class<? extends BaseDocument> requestClass;
+	protected abstract Class<? extends BaseDocument> initRequestClass();
+	protected abstract void validateRequest(BaseDocument document, MemberEndPoint destinationEndPoint)throws BusinessException;
+	protected abstract P1 convertRequest(BaseDocument document, MemberEndPoint destinationEndPoint);
+	protected abstract P2 createRejectObject(String incoming, Exception ex, MemberEndPoint destinationEndPoint);
+	protected abstract BaseDocument convertDocumentResponse(P2 response, BaseDocument initialRequest,MemberEndPoint destinationEndPoint);
+
+	public IncomingProcessor() {
+		requestClass = initRequestClass();
+	}
+	
+	@Override
+	public String processRequest(String incoming, MemberEndPoint destinationEndPoint, HttpServletRequest httpRequest) throws IOException, BusinessException {
+		try {
+			return super.processRequest(incoming, destinationEndPoint, httpRequest);
+		}catch(BusinessException |IOException ex) {
+			return rejectRequest(incoming,ex,destinationEndPoint);
+		}
+	}
+	
+	@Override
+	protected P1 convertRequest(String incoming, MemberEndPoint destinationEndPoint) {
+		WebRequest req = new WebRequest();
+		BaseDocument document = req.convertFromXML(incoming, requestClass);
+		//document has been validated in validateRequest
+		return convertRequest(document,destinationEndPoint);
+	}
+	
+	@Override
+	protected String convertResponse(P2 response, String initialRequest, MemberEndPoint destinationEndPoint) throws BusinessException {
+		WebRequest req = new WebRequest();
+		BaseDocument document = req.convertFromXML(initialRequest, requestClass);
+		if(document == null) {
+			// May be initial request is not a valid xml data
+			// simply return response
+			return req.convertToXML(response);
+		}
+		BaseDocument resp = convertDocumentResponse(response, document, destinationEndPoint);
+		return req.convertToXML(resp);
+	}
+
+	@Override
+	protected void validateRequest(String incoming, MemberEndPoint destinationEndPoint) throws BusinessException {
+		WebRequest req = new WebRequest();
+		BaseDocument document = req.convertFromXML(incoming, requestClass);
+		if(document == null) {
+			LOG.info("processRequest::Could not parse incoming");
+			throw new InvalidInputFile(CoreUtil.INVALID_INPUT_MSG);
+		}
+		validateRequest(document,destinationEndPoint);
+	}
+	
+	protected String rejectRequest(String incoming,Exception ex, MemberEndPoint destinationEndPoint) throws BusinessException {
+		if(ex instanceof InvalidInputFile) {
+			//just throw it again, controllerhandler will format it
+			throw (InvalidInputFile)ex;
+		}
+		P2 rejectObject = createRejectObject(incoming,ex,destinationEndPoint);
+		try {
+			return convertResponse(rejectObject, incoming, destinationEndPoint);
+		} catch (BusinessException e) {
+			LOG.info("rejectRequest::could not reject request "+e);
+			throw e;
+		}
+	}
+}

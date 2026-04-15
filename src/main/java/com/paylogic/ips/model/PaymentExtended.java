@@ -1,0 +1,94 @@
+package com.paylogic.ips.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.paylogic.ama.core.model.Payment;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown=true)
+public class PaymentExtended  extends Payment{
+	private static final long serialVersionUID = -6233323322863216479L;
+	private String rejectCode;
+	
+	public PaymentExtended() {
+		
+	}
+	
+	public PaymentExtended(Payment p) {
+	    setIssuerTrxRef(p.getIssuerTrxRef());
+	    setAcquirerTrxRef(p.getAcquirerTrxRef());
+	    setIntent(p.getIntent());
+	    setCreateTime(p.getCreateTime());
+	    setSenderMobile(p.getSenderMobile());
+	    setReceiverMobile(p.getReceiverMobile());
+	    setDescription(p.getDescription());
+	    setAmount(p.getAmount());
+	    setCurrency(p.getCurrency());
+	    setFromMember(p.getFromMember());
+	    setToMember(p.getToMember());
+	    setValidityDuration(p.getValidityDuration());  
+	    setState(p.getState());
+	    setEncryptedCode(p.getEncryptedCode());
+	    setVoucherCode(p.getVoucherCode());
+	    setWalletSource(p.getWalletSource());
+	    setWalletDestination(p.getWalletDestination());
+	    setRejectMessage(p.getRejectMessage());
+	    setExpiryTime(p.getExpiryTime());
+	    setBank(p.getBank());
+	    setAtm(p.getAtm());
+	    setUpdateTime(p.getUpdateTime());
+	    setUpdateMessage(p.getUpdateMessage());
+	    setAccountNumber(p.getAccountNumber()); 
+	    setProcessingReturnCode(p.getProcessingReturnCode());
+	    setProcessingTime(p.getProcessingTime()); 
+	    setBillingCurrency(p.getBillingCurrency());
+	    setBillingAmount(p.getBillingAmount());
+	    setPurchaseRef(p.getPurchaseRef());
+	    setServiceRef(p.getServiceRef());
+	    setProcessingCode(p.getProcessingCode());
+	    setChannelCode(p.getChannelCode());
+	    setDirectionOperationCode(p.getDirectionOperationCode());
+	    setSrcCountry(p.getSrcCountry());
+	    setDstCountry(p.getDstCountry());
+	    setAuthorizationTypeCode(p.getAuthorizationTypeCode());
+	    setSourceAssociation(p.getSourceAssociation());
+	    setStan(p.getStan());
+	    setMep1(p.getMep1());
+	    setMep2(p.getMep2());
+	    setBillingExchangeRate(p.getBillingExchangeRate());
+	    setFeesAmount(p.getFeesAmount());
+	    setSendSourceHandler(p.getSendSourceHandler());
+	    setUpdateSourceHandler(p.getUpdateSourceHandler());
+	    setAuthCode(p.getAuthCode());
+	    setSessionId(p.getSessionId());
+	    setPos(p.getPos());
+	    setTeller(p.getTeller());
+	    setSrcMcc(p.getSrcMcc());
+	    setDestMcc(p.getDestMcc());
+	    setQrUsage(p.getQrUsage());
+	    setBillInquiryData(p.getBillInquiryData());
+	    setBillList(p.getBillList());
+	    setSenderCustomerData(p.getSenderCustomerData());
+	    setReceiverCustomerData(p.getReceiverCustomerData());
+	    setSrcAccounts(p.getSrcAccounts());
+	    setDstAccounts(p.getDstAccounts());
+	    setAdditionalData(p.getAdditionalData());
+	    setAction(p.getAction());
+	}
+	
+	public String getRejectCode() {
+		return rejectCode;
+	}
+	public void setRejectCode(String rejectCode) {
+		this.rejectCode = rejectCode;
+	}
+	
+	@Override
+	public String toString() {
+		String sup = super.toString();
+		return sup.replace("Payment", "PaymentExtended")
+				  .replace("', 'rejectMessage'='","'rejectCode':'" + rejectCode + "', 'rejectMessage'='");
+	}
+	
+	
+}

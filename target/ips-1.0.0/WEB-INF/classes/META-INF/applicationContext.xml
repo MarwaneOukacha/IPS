@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+			http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx 
+			http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/task 
+			http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<!-- ========================================== -->
+	<!-- PROPERTY HOLDER                            -->
+	<!-- ========================================== -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+		p:location="classpath:app.properties" />
+
+	<!-- ========================================== -->
+	<!-- ANNOTATION SUPPORT                         -->
+	<!-- ========================================== -->
+	<context:annotation-config />
+
+	<!-- ========================================== -->
+	<!-- SCHEDULER CONFIGURATION                    -->
+	<!-- Active le support des @Scheduled           -->
+	<!-- ========================================== -->
+	<task:annotation-driven scheduler="taskScheduler"/>
+	<task:scheduler id="taskScheduler" pool-size="5"/>
+
+	<!-- ========================================== -->
+	<!-- BEANS                                      -->
+	<!-- ========================================== -->
+	<bean class="com.paylogic.ama.endpoint.processor.standard.StandardHandlerProcessor" 
+		id="handlerProcessor"/>
+	<bean class="com.paylogic.ama.endpoint.processor.standard.TokenProcessor" 
+		id="tokenProcessor"/>
+	<bean class="com.paylogic.ips.store.IsoParameterStore" 
+		id="parameterStore"/>
+
+	<!-- ========================================== -->
+	<!-- COMPONENT SCAN                             -->
+	<!-- Scan des packages pour detecter @Service  -->
+	<!-- ========================================== -->
+	<context:component-scan base-package="com.paylogic.ips" />
+	<context:component-scan base-package="com.paylogic.ips.iso20022.converter" />
+	<context:component-scan base-package="com.paylogic.ips.iso20022.processor" />
+
+</beans>

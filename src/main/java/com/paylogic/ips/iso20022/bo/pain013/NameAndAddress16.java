@@ -1,0 +1,97 @@
+//
+// Ce fichier a été généré par l'implémentation de référence JavaTM Architecture for XML Binding (JAXB), v2.3.2 
+// Voir <a href="https://javaee.github.io/jaxb-v2/">https://javaee.github.io/jaxb-v2/</a> 
+// Toute modification apportée à ce fichier sera perdue lors de la recompilation du schéma source. 
+// Généré le : 2023.10.26 à 04:52:36 PM CAT 
+//
+
+
+package com.paylogic.ips.iso20022.bo.pain013;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
+
+/**
+ * <p>Classe Java pour NameAndAddress16 complex type.
+ * 
+ * <p>Le fragment de schéma suivant indique le contenu attendu figurant dans cette classe.
+ * 
+ * <pre>
+ * &lt;complexType name="NameAndAddress16"&gt;
+ *   &lt;complexContent&gt;
+ *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
+ *       &lt;sequence&gt;
+ *         &lt;element name="Nm" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}Max140Text"/&gt;
+ *         &lt;element name="Adr" type="{urn:iso:std:iso:20022:tech:xsd:pain.013.001.10}PostalAddress24"/&gt;
+ *       &lt;/sequence&gt;
+ *     &lt;/restriction&gt;
+ *   &lt;/complexContent&gt;
+ * &lt;/complexType&gt;
+ * </pre>
+ * 
+ * 
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "NameAndAddress16", propOrder = {
+    "nm",
+    "adr"
+})
+public class NameAndAddress16 {
+
+    @XmlElement(name = "Nm", required = true)
+    protected String nm;
+    @XmlElement(name = "Adr", required = true)
+    protected PostalAddress24 adr;
+
+    /**
+     * Obtient la valeur de la propriété nm.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getNm() {
+        return nm;
+    }
+
+    /**
+     * Définit la valeur de la propriété nm.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setNm(String value) {
+        this.nm = value;
+    }
+
+    /**
+     * Obtient la valeur de la propriété adr.
+     * 
+     * @return
+     *     possible object is
+     *     {@link PostalAddress24 }
+     *     
+     */
+    public PostalAddress24 getAdr() {
+        return adr;
+    }
+
+    /**
+     * Définit la valeur de la propriété adr.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link PostalAddress24 }
+     *     
+     */
+    public void setAdr(PostalAddress24 value) {
+        this.adr = value;
+    }
+
+}
