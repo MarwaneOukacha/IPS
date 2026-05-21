@@ -34,9 +34,9 @@ public class PaymentStatusListener {
         LOG.info("Received PaymentSentEvent for traceReference: " + traceReference);
 
         try {
-            int[] delays = {100000, 150000, 200000};
+            int[] delays = {60000, 80000, 100000};
 
-            Thread.sleep(100000); 
+            Thread.sleep(60000); 
 
             for (int i = 0; i < delays.length; i++) {
 
@@ -46,7 +46,7 @@ public class PaymentStatusListener {
                     boolean success = service.processStatusFromIPS(traceReference);
 
                     if (success) {
-                        LOG.info("Status processed successfully on attempt " + (i + 1));
+                        LOG.info("Status processed successfully for traceReference "+traceReference+" on attempt " + (i + 1));
                         return;
                     }
 

@@ -18,9 +18,12 @@ import com.gms.utils.exception.BusinessException;
 import com.gms.utils.exception.MandatoryFieldEx;
 import com.paylogic.ama.core.model.Payment;
 import com.paylogic.ama.wm.core.bo.EntityPayment;
+import com.paylogic.ips.bo.IpsDuplicatePaymentRequestBo;
+import com.paylogic.ips.bo.IpsReturnPaymentRequestBo;
 import com.paylogic.ips.converter.incoming.Pacs002IncomingConverter;
 import com.paylogic.ips.event.PaymentSentEvent;
 import com.paylogic.ips.iso20022.bo.BaseDocument;
+import com.paylogic.ips.services.IpsDuplicatePaymentService;
 import com.paylogic.ips.services.OutGoingIpsService;
 
 @RestController
@@ -32,6 +35,9 @@ public class InternalController {
     
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+    
+    @Autowired
+    private IpsDuplicatePaymentService ipsService;
 
     @PostMapping(value = "/forward")
     public Payment forward(@RequestBody EntityPayment payment) throws BusinessException, IOException {
@@ -60,6 +66,28 @@ public class InternalController {
     @PostMapping("/transfers/ack")
     public ResponseEntity<String> receivePacs002(@RequestBody String pacs002Xml) {
         return outgoingipsservice.receivePacs002(pacs002Xml);
+    }
+    
+    
+
+    @PostMapping("/camt033")
+    public ResponseEntity<String> sendCamt033(
+            @RequestBody IpsDuplicatePaymentRequestBo requestBo)
+            throws BusinessException {
+
+        ipsService.sendCamt033ToIPS(requestBo);
+
+        return ResponseEntity.ok("camt.033 request sent successfully to IPS");
+    }
+
+    @PostMapping("/pacs004")
+    public ResponseEntity<String> sendPacs004(
+            @RequestBody IpsReturnPaymentRequestBo requestBo)
+            throws BusinessException {
+
+        ipsService.sendPacs004ToIPS(requestBo);
+
+        return ResponseEntity.ok("pacs.004 request sent successfully to IPS");
     }
 
     

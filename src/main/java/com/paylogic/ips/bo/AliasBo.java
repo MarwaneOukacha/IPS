@@ -27,7 +27,8 @@ public class AliasBo {
 	}
 	@Override
 	public String toString() {
-		return "AliasBo [type=" + type + ", value=" + value + "]";
+		return "AliasBo [type=" + type + ", value=" + value + ", accounts=" + accounts + "]";
 	}
+	
     
 }

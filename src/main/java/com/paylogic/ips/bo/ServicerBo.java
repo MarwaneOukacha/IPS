@@ -1,8 +1,17 @@
 package com.paylogic.ips.bo;
 
-public class ServicerBo {
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+
+public class ServicerBo {
+	@JsonAlias({"memberId", "bic"})
 	private String bic;
+	
+	
+
+	
 
 	public String getBic() {
 		return bic;
@@ -14,7 +23,9 @@ public class ServicerBo {
 
 	@Override
 	public String toString() {
-		return "ServicerBo [other=" + bic + "]";
-	} 
+		return "ServicerBo [bic=" + bic + "]";
+	}
+
+	
 	
 }

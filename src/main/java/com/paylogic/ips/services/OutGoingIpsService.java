@@ -2,6 +2,12 @@ package com.paylogic.ips.services;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -9,14 +15,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +56,7 @@ import com.paylogic.ips.iso20022.bo.pacs002.DocumentPacs002;
 import com.paylogic.ips.iso20022.bo.pacs002.FIToFIPaymentStatusReportV13;
 import com.paylogic.ips.iso20022.bo.pacs002.PaymentTransaction142;
 import com.paylogic.ips.util.CoreUtil;
+
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import javax.xml.xpath.*;
@@ -58,7 +72,18 @@ public class OutGoingIpsService {
     private Pacs008OutgoingConverter pacs008Converter;
     
     @Autowired private Pacs002IncomingConverter pacs002IncomingConverter;
+    @Value("${ips.signing.keystoreFile}")
+    private String keystoreFile;
 
+    @Value("${ips.signing.keystorePass}")
+    private String keystorePass;
+
+    @Value("${ips.signing.keyAlias}")
+    private String keyAlias;
+
+    @Value("${ips.signing.keyPass:}")
+    private String keyPass;
+    
     @Autowired
     private CasService casService;
 
@@ -79,6 +104,18 @@ public class OutGoingIpsService {
     @Value("${checkOutpayment}")
     private String checkOutpayment;
     
+    @Value("${walletcore.auth.clientId}")
+    private String clientId;
+
+    @Value("${walletcore.auth.clientSecret}")
+    private String clientSecret;
+
+    @Value("${walletcore.auth.password}")
+    private String password;
+
+    @Value("${walletcore.auth.username}")
+    private String username;
+    
     @Value("${walletcore.url.acceptType:application/json}")
     private String acceptType;
     @Value("${walletcore.url.connectTimeout:10000}")
@@ -93,6 +130,25 @@ public class OutGoingIpsService {
     private String urlToken;
     @Value("${walletcore.url.update}")
     private String urlupdate;
+    @Autowired
+    private SignerService signerService;
+
+    private KeyStore keyStore;
+
+    @PostConstruct
+    private void initKeyStore() {
+        try {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(
+                Files.newInputStream(Paths.get(keystoreFile)),
+                keystorePass.toCharArray()
+            );
+            this.keyStore = ks;
+            LOG.info("IPS keystore loaded OK - alias: " + keyAlias);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load IPS keystore", e);
+        }
+    }
     /**
      * Main entry point to send a payment to IPS
      */
@@ -119,11 +175,21 @@ public class OutGoingIpsService {
             LOG.error("Sending to IPS failed", e);
             throw new BusinessException("Failed to send payment to IPS", e);
         }
-
-        if (webRequest.getResponse().getResponseCode() != 200) {
-            LOG.error("Sending to IPS failed: " + webRequest.getResponse().getResponseMsg());
-            throw new BusinessException("Failed to send payment to IPS");
+        
+        String responseMsg = webRequest.getResponse().getResponseMsg();
+        int responseCode = webRequest.getResponse().getResponseCode();
+        
+        
+        
+        if (responseCode!= 200) {
+        	JSONObject jsonResponse = new JSONObject(responseMsg);
+        	LOG.error("Sending to IPS failed: " + webRequest.getResponse().getResponseMsg());
+            throw new BusinessException(
+            		jsonResponse.optString("description")
+            );
         }
+	        
+        
         //payment.getPayment().setState(CoreUtil.PAY_STATUS_PENDING);
         return payment.getPayment();
     }
@@ -131,14 +197,15 @@ public class OutGoingIpsService {
     /**
      * Build IPS request payload using Payment object
      */
+    /*
     private IpsSendPaymentRequestBo buildIpsRequest(EntityPayment entitypayment) throws BusinessException {
-    	Payment payment=entitypayment.getPayment();
+    	
+        Payment payment = entitypayment.getPayment();
         // Get current date/time
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.of("+02:00"));
         String creationDateTime = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         String dateOnly = now.toLocalDate().toString();
 
-        // Format amount according to ISO 4217
         String amountFormatted;
         if ("108".equals(payment.getCurrency())) {
             amountFormatted = String.valueOf(payment.getAmount().longValue()); // no decimals
@@ -147,72 +214,83 @@ public class OutGoingIpsService {
         }
 
         // Ensure EndToEndId is max 35 chars
-        String endToEndId = "xx";
-        if (payment != null && payment.getDescription() != null) {
-            endToEndId = payment.getDescription();
-        }
+        String endToEndId = payment.getDescription() != null ? payment.getDescription() : payment.getIssuerTrxRef();
         if (endToEndId.length() > 35) {
             endToEndId = endToEndId.substring(0, 35);
         }
+
         String currencyAlpha = getCurrencyAlpha(payment.getCurrency());
-        String ttc=null;
+        String ttc;
         AccountInfo dstAccount = payment.getDstAccounts().get(0);
-        if(dstAccount.getType().equals("WALLET")) {
-        	ttc="002";
-        }else  {
-        	ttc="001";
+        ttc = "WALLET".equals(dstAccount.getType()) ? "002" : "001";
+        String bic = dstAccount.getVerificationData().get("title");
+
+        // Validations for required fields
+        String senderName = payment.getSenderCustomerData().getFirstname()+" "+payment.getSenderCustomerData().getSecondname();
+        if (StringUtil.isNullOrEmpty(senderName)) {
+            throw new BusinessException("Sender name cannot be null or empty");
         }
-        String bic=dstAccount.getVerificationData().get("title");
+
+        String receiverSurname = payment.getReceiverCustomerData().getSurname();
+        if (StringUtil.isNullOrEmpty(receiverSurname)) {
+            throw new BusinessException("Receiver surname cannot be null or empty");
+        }
+
+        String description = payment.getDescription(); // Remittance information
+        if (StringUtil.isNullOrEmpty(description)) {
+            description="Remittance transfer";
+        }
+
         // Build XML safely
         StringBuilder xml = new StringBuilder();
         xml.append("<DataPDU xmlns=\"urn:cma:stp:xsd:stp.1.0\">")
-           .append("<Body>")
-               .append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">")
-                   .append("<Fr><FIId><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></FIId></Fr>")
-                   .append("<To><FIId><FinInstnId><BICFI>"+bic+"</BICFI></FinInstnId></FIId></To>")
-                   .append("<BizMsgIdr>").append(payment.getIssuerTrxRef()).append("</BizMsgIdr>")
-                   .append("<MsgDefIdr>pacs.008.001.10</MsgDefIdr>")
-                   .append("<BizSvc>brb.ips.01</BizSvc>")
-                   .append("<CreDt>").append(creationDateTime).append("</CreDt>")
-                   .append("<Prty>0100</Prty>")
-               .append("</AppHdr>")
-               .append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.10\">")
-                   .append("<FIToFICstmrCdtTrf>")
-                       .append("<GrpHdr>")
-                           .append("<MsgId>").append(payment.getIssuerTrxRef()).append("</MsgId>")
-                           .append("<CreDtTm>").append(creationDateTime).append("</CreDtTm>")
-                           .append("<NbOfTxs>1</NbOfTxs>")
-                           .append("<SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>")
-                       .append("</GrpHdr>")
-                       .append("<CdtTrfTxInf>")
-                           .append("<PmtId>")
-                               .append("<InstrId>").append(payment.getIssuerTrxRef()).append("</InstrId>")
-                               .append("<EndToEndId>").append(endToEndId).append("</EndToEndId>")
-                               .append("<TxId>").append(payment.getIssuerTrxRef()).append("</TxId>")
-                           .append("</PmtId>")
-                           .append("<PmtTpInf>")
-                               .append("<ClrChanl>RTNS</ClrChanl>")
-                               .append("<LclInstrm><Prtry>TRFI</Prtry></LclInstrm>")
-                           .append("</PmtTpInf>")
-                           .append("<IntrBkSttlmAmt Ccy=\"").append(currencyAlpha).append("\">")
-                               .append(amountFormatted)
-                           .append("</IntrBkSttlmAmt>")
-                           .append("<IntrBkSttlmDt>").append(dateOnly).append("</IntrBkSttlmDt>")
-                           .append("<ChrgBr>SLEV</ChrgBr>")
-                           .append("<InstgAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></InstgAgt>")
-                           .append("<InstdAgt><FinInstnId><BICFI>"+bic+"</BICFI></FinInstnId></InstdAgt>")
-                           .append("<Dbtr><Nm>").append(payment.getSenderMobile()).append("</Nm></Dbtr>")
-                           .append("<DbtrAcct><Id><Othr><Id>").append(payment.getAccountNumber()).append("</Id></Othr></Id></DbtrAcct>")
-                           .append("<DbtrAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></DbtrAgt>")
-                           .append("<CdtrAgt><FinInstnId><BICFI>"+bic+"</BICFI></FinInstnId></CdtrAgt>")
-                           .append("<Cdtr><Nm>").append(payment.getReceiverCustomerData().getSurname()).append("</Nm></Cdtr>")
-                           .append("<CdtrAcct><Id><Othr><Id>").append(payment.getReceiverCustomerData().getSurname()).append("</Id></Othr></Id></CdtrAcct>")
-                           .append("<Purp><Prtry>"+ttc+"</Prtry></Purp>")
-                           .append("<RmtInf><Ustrd>").append(payment.getDescription()).append("</Ustrd></RmtInf>")
-                       .append("</CdtTrfTxInf>")
-                   .append("</FIToFICstmrCdtTrf>")
-               .append("</Document>")
-           .append("</Body>")
+            .append("<Body>")
+                .append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">")
+                    .append("<Fr><FIId><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></FIId></Fr>")
+                    .append("<To><FIId><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></FIId></To>")
+                    .append("<BizMsgIdr>").append(payment.getIssuerTrxRef()).append("</BizMsgIdr>")
+                    .append("<MsgDefIdr>pacs.008.001.10</MsgDefIdr>")
+                    .append("<BizSvc>brb.ips.01</BizSvc>")
+                    .append("<CreDt>").append(creationDateTime).append("</CreDt>")
+                    .append("<Prty>0100</Prty>")
+                .append("</AppHdr>")
+                .append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.10\">")
+                    .append("<FIToFICstmrCdtTrf>")
+                        .append("<GrpHdr>")
+                            .append("<MsgId>").append(payment.getIssuerTrxRef()).append("</MsgId>")
+                            .append("<CreDtTm>").append(creationDateTime).append("</CreDtTm>")
+                            .append("<NbOfTxs>1</NbOfTxs>")
+                            .append("<SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>")
+                        .append("</GrpHdr>")
+                        .append("<CdtTrfTxInf>")
+                            .append("<PmtId>")
+                                .append("<InstrId>").append(payment.getIssuerTrxRef()).append("</InstrId>")
+                                .append("<EndToEndId>").append(endToEndId).append("</EndToEndId>")
+                                .append("<TxId>").append(payment.getIssuerTrxRef()).append("</TxId>")
+                            .append("</PmtId>")
+                            .append("<PmtTpInf>")
+                                .append("<ClrChanl>RTNS</ClrChanl>")
+                                .append("<LclInstrm><Prtry>TRFI</Prtry></LclInstrm>")
+                            .append("</PmtTpInf>")
+                            .append("<IntrBkSttlmAmt Ccy=\"").append(currencyAlpha).append("\">")
+                                .append(amountFormatted)
+                            .append("</IntrBkSttlmAmt>")
+                            .append("<IntrBkSttlmDt>").append(dateOnly).append("</IntrBkSttlmDt>")
+                            .append("<ChrgBr>SLEV</ChrgBr>")
+                            .append("<InstgAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></InstgAgt>")
+                            .append("<InstdAgt><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></InstdAgt>")
+                            .append("<Dbtr><Nm>").append(senderName).append("</Nm></Dbtr>")
+                            .append("<DbtrAcct><Id><Othr><Id>").append(payment.getAccountNumber()).append("</Id></Othr></Id></DbtrAcct>")
+                            .append("<DbtrAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></DbtrAgt>")
+                            .append("<CdtrAgt><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></CdtrAgt>")
+                            .append("<Cdtr><Nm>").append(receiverSurname).append("</Nm></Cdtr>")
+                            .append("<CdtrAcct><Id><Othr><Id>").append(payment.getDstAccounts().get(0).getIden()).append("</Id></Othr></Id></CdtrAcct>")
+                            .append("<Purp><Prtry>").append(ttc).append("</Prtry></Purp>")
+                            .append("<RmtInf><Ustrd>").append(description).append("</Ustrd></RmtInf>")
+                        .append("</CdtTrfTxInf>")
+                    .append("</FIToFICstmrCdtTrf>")
+                .append("</Document>")
+            .append("</Body>")
         .append("</DataPDU>");
 
         // Build request object
@@ -224,9 +302,151 @@ public class OutGoingIpsService {
         request.setType("pacs.008.001.10");
 
         return request;
+    }*/
+    
+    
+    private IpsSendPaymentRequestBo buildIpsRequest(EntityPayment entitypayment) throws BusinessException {
+
+        Payment payment = entitypayment.getPayment();
+
+        // ── date/time ────────────────────────────────────────────────────────
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.of("+02:00"));
+        String creationDateTime = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        String dateOnly = now.toLocalDate().toString();
+
+        // ── amount ───────────────────────────────────────────────────────────
+        String amountFormatted;
+        if ("108".equals(payment.getCurrency())) {
+            amountFormatted = String.valueOf(payment.getAmount().longValue());
+        } else {
+            amountFormatted = payment.getAmount().toString();
+        }
+
+        // ── endToEndId ───────────────────────────────────────────────────────
+        String endToEndId = payment.getDescription() != null
+                ? payment.getDescription()
+                : payment.getIssuerTrxRef();
+        if (endToEndId.length() > 35) {
+            endToEndId = endToEndId.substring(0, 35);
+        }
+
+        // ── other fields ─────────────────────────────────────────────────────
+        String currencyAlpha = getCurrencyAlpha(payment.getCurrency());
+        AccountInfo dstAccount = payment.getDstAccounts().get(0);
+        String ttc = "WALLET".equals(dstAccount.getType()) ? "002" : "001";
+        String bic = dstAccount.getVerificationData().get("title");
+
+        String senderName = payment.getSenderCustomerData().getFirstname()
+                + " " + payment.getSenderCustomerData().getSecondname();
+        if (StringUtil.isNullOrEmpty(senderName)) {
+            throw new BusinessException("Sender name cannot be null or empty");
+        }
+
+        String receiverSurname = payment.getReceiverCustomerData().getSurname();
+        if (StringUtil.isNullOrEmpty(receiverSurname)) {
+            throw new BusinessException("Receiver surname cannot be null or empty");
+        }
+
+        String description = payment.getDescription();
+        if (StringUtil.isNullOrEmpty(description)) {
+            description = "Remittance transfer";
+        }
+
+        // ── build XML string ─────────────────────────────────────────────────
+        StringBuilder xml = new StringBuilder();
+        xml.append("<DataPDU xmlns=\"urn:cma:stp:xsd:stp.1.0\">")
+            .append("<Body>")
+                .append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">")
+                    .append("<Fr><FIId><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></FIId></Fr>")
+                    .append("<To><FIId><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></FIId></To>")
+                    .append("<BizMsgIdr>").append(payment.getIssuerTrxRef()).append("</BizMsgIdr>")
+                    .append("<MsgDefIdr>pacs.008.001.10</MsgDefIdr>")
+                    .append("<BizSvc>brb.ips.01</BizSvc>")
+                    .append("<CreDt>").append(creationDateTime).append("</CreDt>")
+                    .append("<Prty>0100</Prty>")
+                    // ← pas de <Sgntr> ici, SignerService l'injecte automatiquement
+                .append("</AppHdr>")
+                .append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.10\">")
+                    .append("<FIToFICstmrCdtTrf>")
+                        .append("<GrpHdr>")
+                            .append("<MsgId>").append(payment.getIssuerTrxRef()).append("</MsgId>")
+                            .append("<CreDtTm>").append(creationDateTime).append("</CreDtTm>")
+                            .append("<NbOfTxs>1</NbOfTxs>")
+                            .append("<SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>")
+                        .append("</GrpHdr>")
+                        .append("<CdtTrfTxInf>")
+                            .append("<PmtId>")
+                                .append("<InstrId>").append(payment.getIssuerTrxRef()).append("</InstrId>")
+                                .append("<EndToEndId>").append(endToEndId).append("</EndToEndId>")
+                                .append("<TxId>").append(payment.getIssuerTrxRef()).append("</TxId>")
+                            .append("</PmtId>")
+                            .append("<PmtTpInf>")
+                                .append("<ClrChanl>RTNS</ClrChanl>")
+                                .append("<LclInstrm><Prtry>TRFI</Prtry></LclInstrm>")
+                            .append("</PmtTpInf>")
+                            .append("<IntrBkSttlmAmt Ccy=\"").append(currencyAlpha).append("\">")
+                                .append(amountFormatted)
+                            .append("</IntrBkSttlmAmt>")
+                            .append("<IntrBkSttlmDt>").append(dateOnly).append("</IntrBkSttlmDt>")
+                            .append("<ChrgBr>SLEV</ChrgBr>")
+                            .append("<InstgAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></InstgAgt>")
+                            .append("<InstdAgt><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></InstdAgt>")
+                            .append("<Dbtr><Nm>").append(senderName).append("</Nm></Dbtr>")
+                            .append("<DbtrAcct><Id><Othr><Id>").append(payment.getAccountNumber()).append("</Id></Othr></Id></DbtrAcct>")
+                            .append("<DbtrAgt><FinInstnId><BICFI>BKGFBIBI</BICFI></FinInstnId></DbtrAgt>")
+                            .append("<CdtrAgt><FinInstnId><BICFI>").append(bic).append("</BICFI></FinInstnId></CdtrAgt>")
+                            .append("<Cdtr><Nm>").append(receiverSurname).append("</Nm></Cdtr>")
+                            .append("<CdtrAcct><Id><Othr><Id>").append(payment.getDstAccounts().get(0).getIden()).append("</Id></Othr></Id></CdtrAcct>")
+                            .append("<Purp><Prtry>").append(ttc).append("</Prtry></Purp>")
+                            .append("<RmtInf><Ustrd>").append(description).append("</Ustrd></RmtInf>")
+                        .append("</CdtTrfTxInf>")
+                    .append("</FIToFICstmrCdtTrf>")
+                .append("</Document>")
+            .append("</Body>")
+        .append("</DataPDU>");
+
+        String signedXml;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            DocumentBuilder builder = dbf.newDocumentBuilder();
+            Document doc = builder.parse(
+                new InputSource(new StringReader(xml.toString()))
+            );
+
+  
+            String pass = (keyPass != null && !keyPass.isEmpty())
+                    ? keyPass
+                    : keystorePass;
+            PrivateKey privateKey = (PrivateKey)      keyStore.getKey(keyAlias, pass.toCharArray());
+            X509Certificate cert  = (X509Certificate) keyStore.getCertificate(keyAlias);
+            
+
+            Document signedDoc = signerService.sign(doc, privateKey, cert);
+
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(signedDoc), new StreamResult(writer));
+            signedXml = writer.toString();
+
+        } catch (Exception e) {
+            LOG.error("Failed to sign pacs.008", e);
+            throw new BusinessException("Failed to sign payment XML: " + e.getMessage(), e);
+        }
+
+        // ── build final request ───────────────────────────────────────────────
+        IpsSendPaymentRequestBo request = new IpsSendPaymentRequestBo();
+        request.setDocument(signedXml);
+        request.setSender(user);
+        request.setReceiver(receiver);
+        request.setTraceReference(payment.getIssuerTrxRef());
+        request.setType("pacs.008.001.10");
+
+        return request;
     }
-
-
 
     private void validatePayment(EntityPayment payment) throws BusinessException {
         if (payment == null) throw new BusinessException("Payment cannot be null");
@@ -272,18 +492,24 @@ public class OutGoingIpsService {
 
             WebInterface.processRequest(webRequest);
 
-            int code = webRequest.getResponse().getResponseCode();
-            String responseBody = webRequest.getResponse().getResponseMsg();
+        
 
-            if (code != 200) {
-                LOG.error("Failed to check payment status in IPS. HTTP Code: " + code + ", Response: " + responseBody);
-                return ResponseEntity.status(code).body("Error checking status: " + responseBody);
-            }
-
+            String responseMsg = webRequest.getResponse().getResponseMsg();
+            int responseCode = webRequest.getResponse().getResponseCode();
             
-            LOG.info("Payment status response from IPS: " + responseBody);
+            
+            
+            if (responseCode!= 200) {
+            	JSONObject jsonResponse = new JSONObject(responseMsg);
+            	LOG.error("Sending to IPS failed: " + webRequest.getResponse().getResponseMsg());
+                throw new BusinessException(
+                		jsonResponse.optString("description")
+                );
+            }
+            
+            LOG.info("Payment status response from IPS: " + responseMsg);
 
-            return ResponseEntity.ok(responseBody);
+            return ResponseEntity.ok(responseMsg);
 
         } catch (IOException e) {
             LOG.error("Error checking payment status in IPS", e);
@@ -368,7 +594,7 @@ public class OutGoingIpsService {
             return ResponseEntity.status(500).body("Error processing pacs.002");
         }
     }
-    private WebRequest buildTokenRequest() {
+    /*private WebRequest buildTokenRequest() {
         WebRequest req = new WebRequest();
         req.setAcceptType(acceptType);
         req.setMediaType(mediaTypeForm);
@@ -377,6 +603,28 @@ public class OutGoingIpsService {
         req.setUrl(urlToken);
         req.setQueryMethod(QUERY_METHOD.POST);
         req.setBody("grant_type=password&client_id=restapp&client_secret=restapp&scope=read&username=ips&password=payway100");
+        return req;
+    }*/
+    
+    private WebRequest buildTokenRequest() {
+        WebRequest req = new WebRequest();
+        req.setAcceptType(acceptType);
+        req.setMediaType(mediaTypeForm);
+        req.setReadTimeout(readTimeout);
+        req.setConnectTimeout(connectTimeout);
+        req.setUrl(urlToken);
+        req.setQueryMethod(QUERY_METHOD.POST);
+
+        String body = String.format(
+                "grant_type=password&client_id=%s&client_secret=%s&scope=read&username=%s&password=%s",
+                clientId,
+                clientSecret,
+                username,
+                password
+        );
+
+        req.setBody(body);
+
         return req;
     }
 

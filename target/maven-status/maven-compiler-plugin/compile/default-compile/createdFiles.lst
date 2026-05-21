@@ -59,6 +59,7 @@ com\paylogic\ips\iso20022\bo\pacs003\AddressType2Code.class
 com\paylogic\ips\iso20022\bo\pacs007\Authorisation1Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\DatePeriod2.class
 com\paylogic\ips\iso20022\bo\pacs008\DocumentType3Code.class
+com\paylogic\ips\bo\CreditorAgent.class
 com\paylogic\ips\iso20022\bo\pacs003\FIToFICustomerDirectDebitV10.class
 com\paylogic\ips\iso20022\bo\pacs002\StatusReason6Choice.class
 com\paylogic\ips\iso20022\bo\pacs007\PersonIdentification13.class
@@ -126,6 +127,7 @@ com\paylogic\ips\iso20022\bo\pacs028\PreferredContactMethod1Code.class
 com\paylogic\ips\iso20022\bo\pacs002\MandateRelatedInformation15.class
 com\paylogic\ips\iso20022\bo\pacs007\DocumentAdjustment1.class
 com\paylogic\ips\iso20022\bo\pacs008\CashAccount40.class
+com\paylogic\ips\bo\IpsQrcodeSendPaymentRequestBo.class
 com\paylogic\ips\iso20022\bo\acmt024\MessageIdentification7.class
 com\paylogic\ips\iso20022\bo\pacs003\TaxAmount3.class
 com\paylogic\ips\iso20022\bo\pacs007\ClearingChannel2Code.class
@@ -168,6 +170,7 @@ com\paylogic\ips\iso20022\bo\pacs008\SettlementMethod1Code.class
 com\paylogic\ips\iso20022\bo\pacs028\AddressType3Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\EquivalentAmount2.class
 com\paylogic\ips\iso20022\bo\pacs007\TaxAmount3.class
+com\paylogic\ips\controller\IpsLimitController.class
 com\paylogic\ips\iso20022\bo\pacs007\DiscountAmountType1Choice.class
 com\paylogic\ips\iso20022\bo\pacs007\CreditTransferMandateData1.class
 com\paylogic\ips\iso20022\bo\acmt024\PostalAddress24.class
@@ -183,6 +186,7 @@ com\paylogic\ips\iso20022\bo\pacs003\GroupHeader98.class
 com\paylogic\ips\iso20022\bo\acmt024\IdentificationVerificationReportV03.class
 com\paylogic\ips\iso20022\bo\pacs003\GarnishmentType1.class
 com\paylogic\ips\iso20022\bo\pacs003\CreditorReferenceType1Choice.class
+com\paylogic\ips\services\IpsDuplicatePaymentService.class
 com\paylogic\ips\iso20022\bo\pacs007\AccountSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\pacs008\ReferredDocumentInformation7.class
 com\paylogic\ips\iso20022\bo\pacs002\Contact4.class
@@ -307,7 +311,8 @@ com\paylogic\ips\iso20022\bo\pacs007\PreferredContactMethod1Code.class
 com\paylogic\ips\iso20022\bo\pacs028\ReferredDocumentType3Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\AmendmentInformationDetails14.class
 com\paylogic\ips\iso20022\bo\pacs002\FIToFIPaymentStatusReportV13.class
-com\paylogic\ips\services\QrService.class
+com\paylogic\ips\bo\QrCodeRequestDto.class
+com\paylogic\ips\services\IpsLimitService.class
 com\paylogic\ips\iso20022\bo\pacs003\FrequencyAndMoment1.class
 com\paylogic\ips\iso20022\bo\pacs003\StructuredRemittanceInformation17.class
 com\paylogic\ips\iso20022\bo\acmt024\OtherContact1.class
@@ -355,6 +360,7 @@ com\paylogic\ips\iso20022\bo\pacs028\TaxParty1.class
 com\paylogic\ips\iso20022\bo\pacs007\GarnishmentType1Choice.class
 com\paylogic\ips\iso20022\bo\acmt024\DocumentAcmt024.class
 com\paylogic\ips\iso20022\bo\pacs002\Party40Choice.class
+com\paylogic\ips\bo\QrPaymentResponseBo.class
 com\paylogic\ips\iso20022\bo\acmt23\ProxyAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\acmt23\GenericAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs007\ProxyAccountIdentification1.class
@@ -365,6 +371,7 @@ com\paylogic\ips\iso20022\bo\pain013\ProxyAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\pain013\AdviceType1Choice.class
 com\paylogic\ips\iso20022\bo\pain013\RegulatoryReporting3.class
 com\paylogic\ips\iso20022\bo\pain014\DocumentFormat1Choice.class
+com\paylogic\ips\bo\Ttl.class
 com\paylogic\ips\iso20022\bo\acmt024\PersonIdentificationSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\acmt23\PersonIdentificationSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\pacs007\GenericFinancialIdentification1.class
@@ -376,6 +383,7 @@ com\paylogic\ips\iso20022\bo\pain013\CreditorReferenceType2.class
 com\paylogic\ips\iso20022\bo\pacs008\OrganisationIdentificationSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\pacs007\SettlementDateTimeIndication1.class
 com\paylogic\ips\iso20022\bo\pacs028\TaxPeriod3.class
+com\paylogic\ips\bo\CreditorAccount.class
 com\paylogic\ips\iso20022\bo\pacs008\ServiceLevel8Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\PartyIdentification135.class
 com\paylogic\ips\iso20022\bo\pacs007\OriginalGroupHeader16.class
@@ -387,6 +395,7 @@ com\paylogic\ips\iso20022\bo\pacs007\TaxData1.class
 com\paylogic\ips\iso20022\bo\pacs028\ClearingSystemIdentification2Choice.class
 com\paylogic\ips\iso20022\bo\pacs003\GarnishmentType1Choice.class
 com\paylogic\ips\iso20022\bo\pain014\OtherContact1.class
+com\paylogic\ips\controller\IpsRTPController.class
 com\paylogic\ips\iso20022\bo\pain013\Cheque16.class
 com\paylogic\ips\iso20022\bo\pain013\MandateTypeInformation2.class
 com\paylogic\ips\iso20022\bo\pacs003\DiscountAmountAndType1.class
@@ -410,6 +419,7 @@ com\paylogic\ips\iso20022\bo\pacs007\DocumentType6Code.class
 com\paylogic\ips\iso20022\bo\pain013\RegulatoryReportingType1Code.class
 com\paylogic\ips\converter\outgoing\Pacs002OutgoingConverter.class
 com\paylogic\ips\iso20022\bo\pacs008\DocumentLineType1.class
+com\paylogic\ips\services\ServiceQrcode.class
 com\paylogic\ips\iso20022\bo\pacs028\TaxRecord3.class
 com\paylogic\ips\iso20022\bo\pacs002\PaymentTransaction142.class
 com\paylogic\ips\iso20022\bo\pain014\ServiceLevel8Choice.class
@@ -485,6 +495,7 @@ com\paylogic\ips\iso20022\bo\pacs003\DirectDebitTransactionInformation30.class
 com\paylogic\ips\iso20022\bo\pacs008\PreferredContactMethod1Code.class
 com\paylogic\ips\iso20022\bo\pain014\Frequency6Code.class
 com\paylogic\ips\bo\AccountBo.class
+com\paylogic\ips\bo\PaymentQrcodeRequestBo.class
 com\paylogic\ips\iso20022\bo\pacs002\ProxyAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\acmt024\GenericAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs028\SettlementInstruction11.class
@@ -496,11 +507,11 @@ com\paylogic\ips\iso20022\bo\pain014\GenericPersonIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs003\BranchAndFinancialInstitutionIdentification6.class
 com\paylogic\ips\iso20022\bo\pacs008\GarnishmentType1.class
 com\paylogic\ips\iso20022\bo\pacs008\TaxPeriod3.class
-com\paylogic\ips\processor\outgoing\OutgoingIpsProcessor.class
 com\paylogic\ips\iso20022\bo\pain013\RemittanceAmount2.class
 com\paylogic\ips\iso20022\bo\pacs003\TaxRecordPeriod1Code.class
 com\paylogic\ips\iso20022\bo\pacs028\OtherContact1.class
 com\paylogic\ips\iso20022\bo\acmt23\FinancialInstitutionIdentification18.class
+com\paylogic\ips\bo\PaymentAmountBo.class
 com\paylogic\ips\iso20022\bo\pacs008\TaxAmount3.class
 com\paylogic\ips\iso20022\bo\pain014\PersonIdentification13.class
 com\paylogic\ips\iso20022\bo\pacs007\GenericPersonIdentification1.class
@@ -527,6 +538,7 @@ com\paylogic\ips\iso20022\bo\pain014\OriginalPaymentInstruction46.class
 com\paylogic\ips\iso20022\bo\pacs003\DocumentLineInformation1.class
 com\paylogic\ips\iso20022\bo\pain014\NumberOfTransactionsPerStatus5.class
 com\paylogic\ips\iso20022\bo\pain013\GenericFinancialIdentification1.class
+com\paylogic\ips\services\DocumentNodeDereferencer.class
 com\paylogic\ips\iso20022\bo\pacs028\BranchData3.class
 com\paylogic\ips\iso20022\bo\pacs028\ClearingChannel2Code.class
 com\paylogic\ips\iso20022\bo\pacs008\DocumentPacs008.class
@@ -543,6 +555,7 @@ com\paylogic\ips\iso20022\bo\pacs003\TaxAmountAndType1.class
 com\paylogic\ips\iso20022\bo\pacs008\CreditTransferTransaction58.class
 com\paylogic\ips\iso20022\bo\pain013\ServiceLevel8Choice.class
 com\paylogic\ips\iso20022\bo\pain014\CreditorPaymentActivationRequestStatusReportV10.class
+com\paylogic\ips\bo\PaymentRTPRequestBo.class
 com\paylogic\ips\iso20022\bo\pacs002\OriginalBusinessQuery1.class
 com\paylogic\ips\iso20022\bo\pacs003\GenericIdentification30.class
 com\paylogic\ips\iso20022\bo\pacs028\OriginalGroupInformation29.class
@@ -576,10 +589,13 @@ com\paylogic\ips\bo\IpsCasResponseBo.class
 com\paylogic\ips\iso20022\bo\pacs002\DocumentLineInformation1.class
 com\paylogic\ips\iso20022\bo\pacs007\DatePeriod2.class
 com\paylogic\ips\iso20022\bo\pacs028\SupplementaryData1.class
+com\paylogic\ips\bo\IpsRTPPaymentRequestBo.class
 com\paylogic\ips\iso20022\bo\acmt024\GenericOrganisationIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs002\CashAccount40.class
 com\paylogic\ips\iso20022\bo\pacs008\ProxyAccountType1Choice.class
 com\paylogic\ips\iso20022\bo\pacs003\ActiveCurrencyAndAmount.class
+com\paylogic\ips\bo\IpsRTPSendPaymentRequestBo.class
+com\paylogic\ips\bo\IpsDuplicatePaymentRequestBo.class
 com\paylogic\ips\iso20022\bo\acmt024\ProxyAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs003\PostalAddress24.class
 com\paylogic\ips\iso20022\bo\pacs008\RemittanceAmount3.class
@@ -601,6 +617,7 @@ com\paylogic\ips\iso20022\bo\acmt024\SupplementaryDataEnvelope1.class
 com\paylogic\ips\iso20022\bo\acmt23\GenericOrganisationIdentification1.class
 com\paylogic\ips\iso20022\bo\pain014\DatePeriod2.class
 com\paylogic\ips\iso20022\bo\pacs002\RemittanceInformation21.class
+com\paylogic\ips\controller\QrCodeController.class
 com\paylogic\ips\iso20022\bo\pacs007\OrganisationIdentification29.class
 com\paylogic\ips\bo\QrResolveResponse.class
 com\paylogic\ips\iso20022\bo\pacs002\DocumentPacs002.class
@@ -618,6 +635,7 @@ com\paylogic\ips\iso20022\bo\pain014\DateAndDateTime2Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\NumberOfTransactionsPerStatus5.class
 com\paylogic\ips\iso20022\bo\pain013\ChargeBearerType1Code.class
 com\paylogic\ips\iso20022\bo\pacs007\TaxParty2.class
+com\paylogic\ips\bo\IpsReturnPaymentRequestBo.class
 com\paylogic\ips\iso20022\bo\pacs003\DocumentAdjustment1.class
 com\paylogic\ips\iso20022\bo\pain014\CreditorReferenceInformation2.class
 com\paylogic\ips\iso20022\bo\acmt23\package-info.class
@@ -680,6 +698,7 @@ com\paylogic\ips\iso20022\bo\pacs008\ActiveOrHistoricCurrencyAndAmount.class
 com\paylogic\ips\bo\QrResolveRequest.class
 com\paylogic\ips\iso20022\bo\pacs002\FinancialIdentificationSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\pacs003\RemittanceLocationData1.class
+com\paylogic\ips\services\SignerService.class
 com\paylogic\ips\iso20022\bo\pain013\GarnishmentType1.class
 com\paylogic\ips\iso20022\bo\acmt024\GenericFinancialIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs007\MandateClassification1Code.class
@@ -729,6 +748,7 @@ com\paylogic\ips\iso20022\bo\pacs007\DocumentLineType1.class
 com\paylogic\ips\iso20022\bo\pacs028\DatePeriod2.class
 com\paylogic\ips\iso20022\bo\pacs007\SequenceType3Code.class
 com\paylogic\ips\iso20022\bo\pacs002\MandateTypeInformation2.class
+com\paylogic\ips\bo\QrCodeResponseDto.class
 com\paylogic\ips\iso20022\bo\pacs007\RemittanceAmount2.class
 com\paylogic\ips\iso20022\bo\pacs028\MandateRelatedInformation15.class
 com\paylogic\ips\iso20022\bo\pacs007\MandateRelatedData2Choice.class
@@ -751,14 +771,17 @@ com\paylogic\ips\iso20022\bo\pacs008\ChargeType3Choice.class
 com\paylogic\ips\iso20022\bo\acmt23\IdentificationInformation4.class
 com\paylogic\ips\iso20022\bo\pain013\DateAndDateTime2Choice.class
 com\paylogic\ips\iso20022\bo\pain014\Party38Choice.class
+com\paylogic\ips\util\BrbBicRepository.class
 com\paylogic\ips\iso20022\bo\pacs003\TaxData1.class
 com\paylogic\ips\iso20022\bo\pain013\TaxInformation10.class
+com\paylogic\ips\bo\Amount.class
 com\paylogic\ips\iso20022\bo\pacs003\Contact4.class
 com\paylogic\ips\iso20022\bo\pacs008\ClearingSystemIdentification3Choice.class
 com\paylogic\ips\iso20022\bo\pacs008\GenericIdentification3.class
 com\paylogic\ips\iso20022\bo\pain013\ObjectFactory.class
 com\paylogic\ips\iso20022\bo\pain013\TaxAmountType1Choice.class
 com\paylogic\ips\iso20022\bo\pacs007\Party40Choice.class
+com\paylogic\ips\services\ServiceRTP.class
 com\paylogic\ips\iso20022\bo\pain013\StructuredRegulatoryReporting3.class
 com\paylogic\ips\iso20022\bo\pain014\GenericOrganisationIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs003\OrganisationIdentificationSchemeName1Choice.class
@@ -843,6 +866,7 @@ com\paylogic\ips\iso20022\bo\pacs008\Instruction4Code.class
 com\paylogic\ips\iso20022\bo\pain013\SupplementaryDataEnvelope1.class
 com\paylogic\ips\iso20022\bo\acmt024\NamePrefix2Code.class
 com\paylogic\ips\iso20022\bo\pain014\CategoryPurpose1Choice.class
+com\paylogic\ips\bo\Header.class
 com\paylogic\ips\iso20022\bo\pain013\InstructionForCreditorAgent3.class
 com\paylogic\ips\iso20022\bo\pacs007\Priority3Code.class
 com\paylogic\ips\iso20022\bo\pain014\DocumentLineType1Choice.class
@@ -871,6 +895,7 @@ com\paylogic\ips\iso20022\bo\pacs007\FinancialInstitutionIdentification18.class
 com\paylogic\ips\iso20022\bo\pain013\AddressType3Choice.class
 com\paylogic\ips\iso20022\bo\pain014\DocumentType3Code.class
 com\paylogic\ips\iso20022\bo\pain013\RemittanceLocation7.class
+com\paylogic\ips\bo\DocumentTokenResponseBo.class
 com\paylogic\ips\iso20022\bo\pain014\TaxRecordDetails3.class
 com\paylogic\ips\iso20022\bo\pain013\Purpose2Choice.class
 com\paylogic\ips\iso20022\bo\pacs003\ObjectFactory.class
@@ -880,13 +905,13 @@ com\paylogic\ips\converter\outgoing\Acmt023OutgoingConverter.class
 com\paylogic\ips\iso20022\bo\pain013\GenericIdentification1.class
 com\paylogic\ips\iso20022\bo\pacs008\TaxParty1.class
 com\paylogic\ips\iso20022\bo\pacs002\AccountIdentification4Choice.class
+com\paylogic\ips\bo\AdditionalInfo.class
 com\paylogic\ips\iso20022\bo\pacs003\SettlementDateTimeIndication1.class
 com\paylogic\ips\iso20022\bo\pacs028\PersonIdentificationSchemeName1Choice.class
 com\paylogic\ips\iso20022\bo\acmt23\ProxyAccountType1Choice.class
 com\paylogic\ips\iso20022\bo\pacs002\TaxParty1.class
 com\paylogic\ips\iso20022\bo\pacs002\TaxAuthorisation1.class
 com\paylogic\ips\iso20022\bo\pacs028\DocumentType3Code.class
-com\paylogic\ips\controller\QRResolveController.class
 com\paylogic\ips\iso20022\bo\pacs028\TaxRecordDetails3.class
 com\paylogic\ips\iso20022\bo\pacs028\ReferredDocumentType4.class
 com\paylogic\ips\iso20022\bo\pacs003\Priority3Code.class
@@ -907,6 +932,7 @@ com\paylogic\ips\iso20022\bo\pacs002\MandateClassification1Choice.class
 com\paylogic\ips\iso20022\bo\pacs003\Priority2Code.class
 com\paylogic\ips\iso20022\bo\pacs028\GenericAccountIdentification1.class
 com\paylogic\ips\iso20022\bo\pain013\PostalAddress24.class
+com\paylogic\ips\bo\Extension.class
 com\paylogic\ips\iso20022\bo\pain014\GenericIdentification30.class
 com\paylogic\ips\iso20022\bo\pacs007\AccountIdentification4Choice.class
 com\paylogic\ips\iso20022\bo\pain013\ClearingSystemMemberIdentification2.class

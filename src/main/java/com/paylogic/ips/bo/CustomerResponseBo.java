@@ -4,18 +4,22 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties(ignoreUnknown = true)
+
 public class CustomerResponseBo {
 
     private UidBo uid;
 
     private String documentType;
     private String documentNumber;
-    private LocalDate documentValidityDate;
+    private String documentValidityDate;
 
     private String name;
     private String surname;
     private String gender;
-    private LocalDate birthDate;
+    private String birthDate;
     private String placeOfBirth;
 
     private String nationality;
@@ -55,11 +59,11 @@ public class CustomerResponseBo {
 		this.documentNumber = documentNumber;
 	}
 
-	public LocalDate getDocumentValidityDate() {
+	public String getDocumentValidityDate() {
 		return documentValidityDate;
 	}
 
-	public void setDocumentValidityDate(LocalDate documentValidityDate) {
+	public void setDocumentValidityDate(String documentValidityDate) {
 		this.documentValidityDate = documentValidityDate;
 	}
 
@@ -87,11 +91,11 @@ public class CustomerResponseBo {
 		this.gender = gender;
 	}
 
-	public LocalDate getBirthDate() {
+	public String getBirthDate() {
 		return birthDate;
 	}
 
-	public void setBirthDate(LocalDate birthDate) {
+	public void setBirthDate(String birthDate) {
 		this.birthDate = birthDate;
 	}
 

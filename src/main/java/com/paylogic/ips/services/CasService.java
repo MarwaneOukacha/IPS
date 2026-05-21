@@ -1,16 +1,20 @@
 package com.paylogic.ips.services;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gms.utils.common.StringUtil;
 import com.gms.utils.exception.BusinessException;
 import com.gms.utils.net.webinterface.WebInterface;
@@ -21,6 +25,7 @@ import com.paylogic.ama.core.model.CustomerKyc;
 import com.paylogic.ama.core.model.Payment;
 import com.paylogic.ips.bo.*;
 import com.paylogic.ips.util.CoreUtil;
+
 
 @Service
 public class CasService {
@@ -55,7 +60,11 @@ public class CasService {
 
     public CustomerResponseBo registerCustomerToCAS(IpsCustomerIdentityBo request)
             throws BusinessException {
-
+    	ServicerBo servicer=new ServicerBo();
+    	servicer.setBic(senderBic);
+    	request.getAliases().get(0).getAccounts().get(0).setServicer(servicer);
+    	LOG.info("register:: "+request);
+    	
         validateRequest(request);
 
         String accessToken = tokenService.getAccessToken();
@@ -73,13 +82,91 @@ public class CasService {
             throw new BusinessException("CAS register request failed", e);
         }
 
-        return webRequest.convertFromJson(
-                webRequest.getResponse().getResponseMsg(),
-                CustomerResponseBo.class
-        );
+        String responseMsg = webRequest.getResponse().getResponseMsg();
+        int responseCode = webRequest.getResponse().getResponseCode();
+        
+        JSONObject jsonResponse = new JSONObject(responseMsg);
+        
+        if (responseCode!= 200) {
+            throw new BusinessException(
+            		jsonResponse.optString("description")
+            );
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(responseMsg);
+
+            CustomerResponseBo response = new CustomerResponseBo();
+
+            // --- UID object ---
+            if (root.has("uid")) {
+                JsonNode uidNode = root.get("uid");
+
+                UidBo uid = new UidBo();
+                uid.setType(getText(uidNode, "type"));   // MOBILE
+                uid.setValue(getText(uidNode, "value"));
+
+                response.setUid(uid);
+            }
+
+            // --- simple fields ---
+            response.setName(getText(root, "name"));
+            response.setSurname(getText(root, "surname"));
+            response.setGender(getText(root, "gender"));
+            response.setStatus(getText(root, "status"));
+            response.setNationality(getText(root, "nationality"));
+            response.setDocumentType(getText(root, "documentType"));
+            response.setDocumentNumber(getText(root, "documentNumber"));
+            response.setRecordId((getText(root, "recordId")));
+            
+            
+
+
+            // --- dates ---
+            if (root.hasNonNull("documentValidityDate")) {
+                response.setDocumentValidityDate(getText(root, "documentValidityDate"));
+            }
+
+            if (root.hasNonNull("birthDate")) {
+                response.setBirthDate(getText(root, "birthDate"));
+            }
+
+            // --- address ---
+            if (root.has("address")) {
+                JsonNode addressNode = root.get("address");
+
+                AddressBo address = new AddressBo();
+                address.setCity(getText(addressNode, "city"));
+                address.setCountry(getText(addressNode, "country"));
+                address.setAddress(getText(addressNode, "address"));
+
+                response.setAddress(address);
+            }
+
+            // --- contact details ---
+            if (root.has("contactDetails")) {
+                JsonNode contactNode = root.get("contactDetails");
+
+                ContactDetailsBo contact = new ContactDetailsBo();
+                contact.setMobileNumber(getText(contactNode, "mobileNumber"));
+                contact.setEmail(getText(contactNode, "email"));
+
+                response.setContactDetails(contact);
+            }
+
+            return response;
+
+        } catch (Exception e) {
+            LOG.error("Failed to manually map CAS response", e);
+            throw new BusinessException("Invalid CAS response format", e);
+        }
     }
 
-
+    private String getText(JsonNode node, String field) {
+        return (node != null && node.hasNonNull(field))
+                ? node.get(field).asText()
+                : null;
+    }
     public void removeCustomerFromCAS(String customerId) throws BusinessException {
 
         if (StringUtil.isNullOrEmpty(customerId)) {
@@ -103,18 +190,25 @@ public class CasService {
             LOG.error("CAS delete request failed", e);
             throw new BusinessException("CAS delete request failed", e);
         }
-
-        if (webRequest.getResponse().getResponseCode() != 200) {
+        
+        String responseMsg = webRequest.getResponse().getResponseMsg();
+        int responseCode = webRequest.getResponse().getResponseCode();
+        
+        JSONObject jsonResponse = new JSONObject(responseMsg);
+        
+        if (responseCode!= 200) {
             throw new BusinessException(
-                    "Error deleting customer: " + webRequest.getResponse().getResponseMsg()
+            		jsonResponse.optString("description")
             );
         }
+
+
 
         LOG.info("Customer removed from CAS successfully: " + customerId);
     }
 
 
-    public PaymentBo searchCustomerInCAS(PaymentBo payment) throws BusinessException {
+    public PaymentBo searchCustomerInCAS(PaymentBo payment) throws BusinessException, UnsupportedEncodingException {
 		
 		 if (payment == null || StringUtil.isNullOrEmpty(payment.getWalletDestination())) {
             throw new BusinessException("Payment or phone number is mandatory for search");
@@ -123,31 +217,48 @@ public class CasService {
 
         String accessToken = tokenService.getAccessToken();
 
-        String searchUrl = casResolveUrl + payment.getWalletDestination();
-        //String searchUrl = casResolveUrl ;
+        String phone = payment.getWalletDestination();
+
+        if (!phone.startsWith("+")) {
+            phone = "+" + phone;
+        }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("aliasType", "MOBILE");
+        String encodedPhone = URLEncoder.encode(phone, "UTF-8");
+
+        params.put("aliasValue", encodedPhone); // RAW +257...
+
+        LOG.info("encodedPhone:: "+encodedPhone);
 
         
         WebRequest webRequest = new WebRequest();
-        webRequest.setUrl(searchUrl);
+        webRequest.setUrl(casResolveUrl);
         webRequest.setAcceptType(acceptType);
         webRequest.setMediaType(mediaTypeJson);
+        webRequest.setParams(params);
+        webRequest.setEncodeParams(false);
         webRequest.setQueryMethod(WebRequest.QUERY_METHOD.GET);
         webRequest.setHeader(tokenService.buildBearerHeader(accessToken));
 
         try {
-        	LOG.info("searchUrl:: "+searchUrl);
+        	LOG.info("searchUrl:: "+casResolveUrl);
             WebInterface.processRequest(webRequest);
         } catch (IOException e) {
             LOG.error("CAS search request failed", e);
             throw new BusinessException("CAS search request failed", e);
         }
 
-        if (webRequest.getResponse().getResponseCode() != 200) {
+        String responseMsg = webRequest.getResponse().getResponseMsg();
+        int responseCode = webRequest.getResponse().getResponseCode();
+        
+        JSONObject jsonResponse = new JSONObject(responseMsg);
+        
+        if (responseCode!= 200) {
             throw new BusinessException(
-                    "Error searching customer: " + webRequest.getResponse().getResponseMsg()
+            		jsonResponse.optString("description")
             );
         }
-        
         CustomerAccountSearchBo response = webRequest.convertFromJson(
                 webRequest.getResponse().getResponseMsg(),
                 CustomerAccountSearchBo.class);
@@ -163,7 +274,7 @@ public class CasService {
         verificationData.put("title", response.getServicer().getBic());
         acc.setVerificationData(verificationData);;
         
-        acc.setType("WALLET");
+        acc.setType(response.getType());
         dstAccounts.add(acc);
         CustomerKyc receiver=new CustomerKyc();
         receiver.setAddress(response.getAddress().getAddress());

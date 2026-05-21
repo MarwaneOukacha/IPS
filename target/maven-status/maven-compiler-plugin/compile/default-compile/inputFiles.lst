@@ -1,6 +1,5 @@
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\OriginalGroupInformation30.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\SequenceType3Code.java
-C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\QRResolveController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\FinancialInstitutionIdentification18.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\ReferredDocumentType4.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\DatePeriod2.java
@@ -100,6 +99,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DocumentLineInformation1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\CreditDebitCode.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\TaxAuthorisation1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\IpsDuplicatePaymentService.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\converter\incoming\Pacs003IncomingConverter.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\DocumentType6Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\ProxyAccountType1Choice.java
@@ -129,6 +129,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\DocumentType3Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\Party40Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\DocumentPacs002.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\PaymentQrcodeRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\IncomingController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\MandateClassification1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\AddressType3Choice.java
@@ -154,6 +155,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\OriginalPaymentInstruction46.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\GenericPersonIdentification1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\RemittanceAmount3.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsDuplicatePaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsSendPaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\ClearingSystemMemberIdentification2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\PartyAndSignature3.java
@@ -178,6 +180,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain01
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\DocumentType3Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\PostalAddress24.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\TaxParty1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsReturnPaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\GarnishmentType1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\FrequencyAndMoment1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\AddressType2Code.java
@@ -200,6 +203,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\FrequencyPeriod1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\config\AppConfig.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\AccountIdentification4Choice.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\QrCodeRequestDto.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\DateAndPlaceOfBirth1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\Priority2Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\ChargeType3Choice.java
@@ -213,6 +217,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\Frequency6Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\RemittanceAmount2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\StatusReason6Choice.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\Extension.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\ClearingSystemMemberIdentification2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\PreferredContactMethod1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\PartyIdentification135.java
@@ -238,6 +243,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\OrganisationIdentification29.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\DatePeriod2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\LocalInstrument2Choice.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\Ttl.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\GenericPersonIdentification1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DiscountAmountType1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\TaxRecord3.java
@@ -272,6 +278,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\OriginalTransactionReference35.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\PaymentTypeInformation26.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\Charges12.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\DocumentTokenResponseBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\CategoryPurpose1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\ServiceLevel8Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\Frequency36Choice.java
@@ -310,6 +317,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\GenericFinancialIdentification1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\TaxParty2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DocumentType3Code.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsQrcodeSendPaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\validator\Pacs008Validator.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\MandateClassification1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\DiscountAmountType1Choice.java
@@ -335,6 +343,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\Garnishment3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\CreditorPaymentActivationRequestStatusReportV10.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\package-info.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\PaymentRTPRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\TaxRecordDetails3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\ClearingSystemMemberIdentification2.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\package-info.java
@@ -349,9 +358,11 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\ActiveOrHistoricCurrencyAndAmount.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\AddressBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\ChargeBearerType1Code.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\Header.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\StatusReason6Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DocumentAdjustment1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\OrganisationIdentification29.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\ServiceQrcode.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\StructuredRemittanceInformation17.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\CategoryPurpose1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\GarnishmentType1.java
@@ -365,6 +376,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\CategoryPurpose1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\MandateRelatedInformation15.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\GenericOrganisationIdentification1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\SignerService.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\PaymentTransaction131.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\PostalAddress24.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\SequenceType3Code.java
@@ -375,6 +387,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain01
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\CreditTransferMandateData1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\RegulatoryReporting3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\GenericOrganisationIdentification1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\ServiceRTP.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\DateAndDateTime2Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\SequenceType3Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\AmendmentInformationDetails14.java
@@ -382,6 +395,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\CasController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\AmountType4Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\PersonIdentification13.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsRTPSendPaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\RemittanceLocationData1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\PostalAddress24.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\TaxRecord3.java
@@ -525,16 +539,18 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\PaymentReversalReason9.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\Charges12.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DocumentPacs028.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\IpsLimitService.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\Contact4.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\EquivalentAmount2.java
-C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\processor\outgoing\OutgoingIpsProcessor.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\Frequency6Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\TaxRecord3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\StructuredRemittanceInformation17.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\GroupHeader101.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\StructuredRemittanceInformation17.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\IpsRTPPaymentRequestBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\Party38Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\DocumentPacs003.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\IpsLimitController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\NamePrefix2Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\TaxData1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\model\PaymentExtended.java
@@ -653,6 +669,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\ActiveOrHistoricCurrencyAndAmount.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\OrganisationIdentificationSchemeName1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\ProxyAccountIdentification1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\PaymentAmountBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\TaxRecordPeriod1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\converter\outgoing\Pacs002OutgoingConverter.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\OtherContact1.java
@@ -670,6 +687,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\converter\outgoing
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\OrganisationIdentification29.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\ReferredDocumentType4.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\SupplementaryDataEnvelope1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\IpsRTPController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\PreferredContactMethod1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\TokenService.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\ReferredDocumentType4.java
@@ -734,7 +752,9 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain01
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\NamePrefix2Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\AddressType3Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\DateAndPlaceOfBirth1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\CreditorAccount.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\BaseDocument.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\CreditorAgent.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\OrganisationIdentificationSchemeName1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\TaxInformation10.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\DiscountAmountType1Choice.java
@@ -768,6 +788,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\ObjectFactory.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\Purpose2Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\ChargeType3Choice.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\QrCodeResponseDto.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\TaxAuthorisation1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\RegulatoryReporting3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\SettlementDateTimeIndication1.java
@@ -803,6 +824,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\PersonIdentification13.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\GenericIdentification3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\CreditorReferenceType2.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\DocumentNodeDereferencer.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\ChargeType3Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\SupplementaryData1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\BranchData3.java
@@ -825,6 +847,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\Party38Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\PersonIdentificationSchemeName1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\Garnishment3.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\Amount.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\SupplementaryData1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\ProxyAccountIdentification1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\Frequency36Choice.java
@@ -843,6 +866,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\prosessor\CasResol
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DiscountAmountAndType1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\SupplementaryDataEnvelope1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\DocumentType6Code.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\AdditionalInfo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\PreferredContactMethod1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\ClearingSystemIdentification2Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\Party38Choice.java
@@ -886,6 +910,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\DocumentLineType1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\AdviceType1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\DataPDU.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\controller\QrCodeController.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\TaxRecordDetails3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\DateAndDateTime2Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs003\DocumentLineType1.java
@@ -907,6 +932,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\converter\incoming\Acmt023IncomingConverter.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\SettlementInstruction11.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\DiscountAmountAndType1.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\bo\QrPaymentResponseBo.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\BranchAndFinancialInstitutionIdentification6.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\package-info.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\ClearingSystemMemberIdentification2.java
@@ -916,6 +942,7 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs02
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain013\ObjectFactory.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\ObjectFactory.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\MandateSetupReason1Choice.java
+C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\util\BrbBicRepository.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs007\GenericIdentification3.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs008\MandateClassification1Code.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt23\Contact4.java
@@ -936,7 +963,6 @@ C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs00
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\AccountIdentification4Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs028\AmendmentInformationDetails14.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pacs002\GenericOrganisationIdentification1.java
-C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\services\QrService.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\pain014\AmountOrRate1Choice.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\GenericPersonIdentification1.java
 C:\Users\Paylo\Desktop\IPS\ips\src\main\java\com\paylogic\ips\iso20022\bo\acmt024\Party40Choice.java

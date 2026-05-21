@@ -2,6 +2,16 @@ package com.paylogic.ips.services;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,13 +19,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
-
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -23,15 +39,20 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.gms.utils.common.StringUtil;
 import com.gms.utils.exception.BusinessException;
 import com.gms.utils.net.webinterface.WebInterface;
 import com.gms.utils.net.webinterface.WebRequest;
 import com.gms.utils.net.webinterface.WebRequest.QUERY_METHOD;
+import com.paylogic.ama.core.model.AccountInfo;
+import com.paylogic.ama.core.model.Payment;
 import com.paylogic.ama.core.utils.BaseCoreUtil;
+import com.paylogic.ama.wm.core.bo.EntityPayment;
 import com.paylogic.ama.wm.core.bo.WalletPaymentBo;
+import com.paylogic.ips.bo.IpsSendPaymentRequestBo;
 import com.paylogic.ips.util.CoreUtil;
 
 @Service
@@ -39,7 +60,9 @@ public class IncomingIpsService {
 
     private static final Logger LOG = Logger.getLogger(IncomingIpsService.class);
 
-    private static final String OUR_BIC = "BKGFBIBIXXXX";
+    private static final String OUR_BIC       = "BKGFBIBIXXXX";
+    private static final String OUR_BIC_SHORT = "BKGFBIBI";       // used inside XML FinInstnId
+    private static final String IPS_RECEIVER  = "BRBUBIBAXIPS";   // pacs.002 JSON receiver field
 
     @Autowired
     private TokenService tokenService;
@@ -65,66 +88,81 @@ public class IncomingIpsService {
     @Value("${ips.incoming.output.url}")
     private String ipsOutputUrl;
 
+    @Value("${ips.incoming.input.url}")
+    
+    private String ipsInputUrl;
+
     @Value("${walletcore.url.incoming.create}")
     private String urlIncomingCreate;
 
     @Value("${ips.incoming.scheduler.enabled}")
     private boolean schedulerEnabled;
+    private static final String PACS008_TYPE = "pacs.008.001.10";
+    
+    @Value("${ips.signing.keystoreFile}")
+    private String keystoreFile;
+
+    @Value("${ips.signing.keystorePass}")
+    private String keystorePass;
+
+    @Value("${ips.signing.keyAlias}")
+    private String keyAlias;
+
+    @Value("${ips.signing.keyPass:}")
+    private String keyPass;
+    @Autowired
+    private SignerService signerService;
+
+    private KeyStore keyStore;
+
+    @PostConstruct
+    private void initKeyStore() {
+        try {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(
+                Files.newInputStream(Paths.get(keystoreFile)),
+                keystorePass.toCharArray()
+            );
+            this.keyStore = ks;
+            LOG.info("IPS keystore loaded OK - alias: " + keyAlias);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load IPS keystore", e);
+        }
+    }
 
     // =========================================================================
-    // SCHEDULER - Exécuté automatiquement toutes les 5 minutes
+    // SCHEDULER
     // =========================================================================
+   
 
-    /**
-     * Scheduled task qui s'exécute toutes les 5 minutes pour récupérer
-     * et traiter automatiquement les transactions entrantes depuis IPS.
-     * 
-     * Peut être activé/désactivé via la propriété:
-     *   ips.incoming.scheduler.enabled=true/false
-     */
-    @Scheduled(fixedRateString = "${ips.incoming.scheduler.fixedRate:300000}")
+    @Scheduled(fixedRateString = "${ips.incoming.scheduler.fixedRate:15000}")
     public void scheduledIncomingTransactionsPoll() {
-        
         if (!schedulerEnabled) {
             LOG.debug("Incoming IPS scheduler is disabled");
             return;
         }
-
-        LOG.info("║  SCHEDULED TASK: Polling IPS for incoming transactions        ║");
-
+        LOG.info("SCHEDULED TASK: Polling IPS for incoming transactions");
         try {
             int processedCount = fetchAndProcessIncomingTransactions();
-            
             if (processedCount > 0) {
-                LOG.info(" Scheduler successfully processed " + processedCount + " incoming transaction(s)");
+                LOG.info("Scheduler successfully processed " + processedCount + " incoming transaction(s)");
             } else {
-                LOG.info(" Scheduler completed - No new incoming transactions found");
+                LOG.info("Scheduler completed - No new incoming transactions found");
             }
-            
         } catch (BusinessException e) {
-            LOG.error(" Scheduler failed with business error: " + e.getMessage(), e);
+            LOG.error("Scheduler failed with business error: " + e.getMessage(), e);
         } catch (Exception e) {
-            LOG.error(" Scheduler failed with unexpected error", e);
+            LOG.error("Scheduler failed with unexpected error", e);
         }
-
     }
 
     // =========================================================================
-    // Point d'entrée principal (inchangé)
+    // MAIN ENTRY POINT
     // =========================================================================
 
-    /**
-     * Récupère toutes les transactions IPS, filtre celles dont le receiver
-     * correspond à notre BIC (BKGFBIBIXXXX), puis traite chacune d'elles.
-     *
-     * @return nombre de transactions entrantes traitées
-     * @throws Exception 
-     */
     public int fetchAndProcessIncomingTransactions() throws Exception {
-
         LOG.info("=== Starting fetchAndProcessIncomingTransactions ===");
 
-        // 1. Appeler l'API IPS pour obtenir toutes les transactions disponibles
         List<JsonNode> allTransactions = fetchAllTransactionsFromIPS();
 
         if (allTransactions == null || allTransactions.isEmpty()) {
@@ -134,19 +172,15 @@ public class IncomingIpsService {
 
         LOG.info("Total transactions from IPS: " + allTransactions.size());
 
-        // 2. Filtrer uniquement les transactions dont on est le receiver
         List<JsonNode> ourTransactions = filterOurTransactions(allTransactions);
-
         LOG.info("Transactions matching our BIC (" + OUR_BIC + "): " + ourTransactions.size());
 
         if (ourTransactions.isEmpty()) {
             return 0;
         }
 
-        // 3. Obtenir un token WalletCore une seule fois pour toutes les transactions
         String accessToken = getWalletCoreAccessToken();
 
-        // 4. Traiter chaque transaction entrante
         int processed = 0;
         for (JsonNode tx : ourTransactions) {
             try {
@@ -155,7 +189,6 @@ public class IncomingIpsService {
             } catch (Exception e) {
                 String traceRef = tx.has("traceReference") ? tx.get("traceReference").asText() : "UNKNOWN";
                 LOG.error("Failed to process incoming transaction traceReference=" + traceRef, e);
-                // On continue avec les autres transactions même si l'une échoue
             }
         }
 
@@ -163,10 +196,11 @@ public class IncomingIpsService {
         return processed;
     }
 
-    
+    // =========================================================================
+    // FETCH FROM IPS
     // =========================================================================
 
-    private List<JsonNode> fetchAllTransactionsFromIPS() throws BusinessException {
+    public List<JsonNode> fetchAllTransactionsFromIPS() throws BusinessException {
         String uuid = UUID.randomUUID().toString();
         String url = ipsOutputUrl + uuid + "?service=ips";
 
@@ -188,53 +222,68 @@ public class IncomingIpsService {
         }
 
         int responseCode = webRequest.getResponse().getResponseCode();
-        String responseBody = webRequest.getResponse().getResponseMsg();
-
+        String responseMsg = webRequest.getResponse().getResponseMsg();
         if (responseCode != 200) {
-            LOG.error("IPS output returned HTTP " + responseCode + " : " + responseBody);
-            //throw new BusinessException("IPS output endpoint returned error: HTTP " + responseCode);
+            LOG.error("IPS output returned HTTP " + responseCode + " : " + responseMsg);
+        }
+        
+        
+        
+        
+        
+        if (responseCode!= 200) {
+        	JSONObject jsonResponse = new JSONObject(responseMsg);
+            throw new BusinessException(
+            		jsonResponse.optString("description")
+            );
         }
 
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(responseBody);
-
+            JsonNode root = mapper.readTree(responseMsg);
             if (!root.isArray()) {
                 LOG.error("IPS output response is not a JSON array");
-                //throw new BusinessException("Unexpected IPS response format (not an array)");
             }
-
             List<JsonNode> list = new ArrayList<>();
             root.forEach(list::add);
             return list;
-
         } catch (Exception e) {
             LOG.error("Failed to parse IPS output JSON", e);
-            //throw new BusinessException("Failed to parse IPS output response", e);
         }
-		return null;
+        return null;
     }
 
     private List<JsonNode> filterOurTransactions(List<JsonNode> allTransactions) {
         List<JsonNode> result = new ArrayList<>();
-
         for (JsonNode tx : allTransactions) {
-            if (!tx.has("receiver")) {
+            // Filter by receiver
+            if (!tx.has("receiver")) continue;
+            String receiver = tx.get("receiver").asText("");
+            if (!OUR_BIC.equals(receiver) && !receiver.startsWith(OUR_BIC_SHORT)) {
                 continue;
             }
-            String receiver = tx.get("receiver").asText("");
-            if (OUR_BIC.equals(receiver) || receiver.startsWith("BKGFBIBI")) {
-                result.add(tx);
-            }
-        }
 
+            // Filter by type (pacs.008.001.10)
+            if (!tx.has("type")) continue;
+            String type = tx.get("type").asText("");
+            if (!PACS008_TYPE.equals(type)) {
+                continue;
+            }
+
+            result.add(tx);
+        }
         return result;
     }
 
+    // =========================================================================
+    // PROCESS ONE TRANSACTION
+    // =========================================================================
+
     private void processIncomingTransaction(JsonNode txNode, String accessToken) throws Exception {
         String traceReference = txNode.has("traceReference") ? txNode.get("traceReference").asText() : "";
-        String type = txNode.has("type") ? txNode.get("type").asText() : "";
-        String documentXml = txNode.has("document") ? txNode.get("document").asText() : "";
+        String type           = txNode.has("type")           ? txNode.get("type").asText()           : "";
+        String sender         = txNode.has("sender")         ? txNode.get("sender").asText()         : "";
+        String documentXml    = txNode.has("document")       ? txNode.get("document").asText()       : "";
 
         LOG.info("Processing incoming transaction: traceReference=" + traceReference + ", type=" + type);
 
@@ -246,11 +295,348 @@ public class IncomingIpsService {
         Map<String, String> txData = extractPacs008Fields(documentXml);
         txData.put("traceReference", traceReference);
         txData.put("messageType", type);
+        txData.put("jsonSender", sender); // original sender from JSON wrapper
 
         LOG.info("Extracted pacs.008 fields for " + traceReference + " : " + txData);
 
-        sendToWalletCoreBackend(txData, accessToken);
+        // Step 1: forward to WalletCore
+        if("007".equals(txData.get("purpose"))) {
+        	LOG.info("007 sent");
+        	sendPacs002Acknowledgment(txData, "AUTH");
+        }else {
+        	sendToWalletCoreBackend(txData, accessToken);
+        }
+        
     }
+    
+    private IpsSendPaymentRequestBo buildPacs002Request(String xmlSenderBic,
+            String xmlReceiverBic,
+            String senderReference,
+            String origRef,
+            String origTm,
+            String createDate,
+            String settlementDate,
+            String ackStatus) throws BusinessException {
+
+        // Clean dates
+        String createDt = stripTimezone(createDate);
+        String origCreDt = stripTimezone(origTm);
+
+
+        StringBuilder xml = new StringBuilder();
+
+
+        xml.append("<DataPDU xmlns=\"urn:cma:stp:xsd:stp.1.0\">")
+           .append("<Body>")
+
+           .append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">")
+
+               .append("<Fr>")
+                   .append("<FIId>")
+                       .append("<FinInstnId>")
+                           .append("<BICFI>").append(xmlSenderBic).append("</BICFI>")
+                       .append("</FinInstnId>")
+                   .append("</FIId>")
+               .append("</Fr>")
+
+               .append("<To>")
+                   .append("<FIId>")
+                       .append("<FinInstnId>")
+                           .append("<BICFI>BRBUBIBI</BICFI>")
+                       .append("</FinInstnId>")
+                   .append("</FIId>")
+               .append("</To>")
+
+               .append("<BizMsgIdr>").append(senderReference).append("</BizMsgIdr>")
+               .append("<MsgDefIdr>pacs.002.001.12</MsgDefIdr>")
+               .append("<BizSvc>brb.ips.01</BizSvc>")
+               .append("<CreDt>").append(createDt).append("+02:00</CreDt>")
+               .append("<Prty>0100</Prty>")
+
+           .append("</AppHdr>")
+
+           .append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.002.001.12\">")
+           .append("<FIToFIPmtStsRpt>")
+
+               .append("<GrpHdr>")
+                   .append("<MsgId>").append(senderReference).append("</MsgId>")
+                   .append("<CreDtTm>").append(createDt).append("+02:00</CreDtTm>")
+               .append("</GrpHdr>")
+
+               .append("<OrgnlGrpInfAndSts>")
+                   .append("<OrgnlMsgId>").append(origRef).append("</OrgnlMsgId>")
+                   .append("<OrgnlMsgNmId>pacs.008.001.10</OrgnlMsgNmId>")
+                   .append("<OrgnlCreDtTm>").append(origCreDt).append("</OrgnlCreDtTm>")
+                   .append("<StsRsnInf><Rsn><Prtry>").append(ackStatus).append("</Prtry></Rsn></StsRsnInf>");
+        xml.append("</OrgnlGrpInfAndSts>")
+
+           .append("<TxInfAndSts>")
+
+               .append("<OrgnlInstrId>").append(origRef).append("</OrgnlInstrId>")
+               .append("<OrgnlEndToEndId>NOTPROVIDED</OrgnlEndToEndId>")
+               .append("<OrgnlTxId>").append(origRef).append("</OrgnlTxId>")
+
+               .append("<InstgAgt>")
+                   .append("<FinInstnId>")
+                       .append("<BICFI>").append(xmlSenderBic).append("</BICFI>")
+                   .append("</FinInstnId>")
+               .append("</InstgAgt>")
+
+               .append("<InstdAgt>")
+                   .append("<FinInstnId>")
+                       .append("<BICFI>").append(xmlReceiverBic).append("</BICFI>")
+                   .append("</FinInstnId>")
+               .append("</InstdAgt>")
+
+               .append("<OrgnlTxRef>")
+                   .append("<IntrBkSttlmDt>").append(settlementDate).append("</IntrBkSttlmDt>")
+               .append("</OrgnlTxRef>")
+
+           .append("</TxInfAndSts>")
+
+           .append("</FIToFIPmtStsRpt>")
+           .append("</Document>")
+
+           .append("</Body>")
+           .append("</DataPDU>");
+        String signedXml;
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            DocumentBuilder builder = dbf.newDocumentBuilder();
+            Document doc = builder.parse(
+                new InputSource(new StringReader(xml.toString()))
+            );
+
+  
+            String pass = (keyPass != null && !keyPass.isEmpty())
+                    ? keyPass
+                    : keystorePass;
+            PrivateKey privateKey = (PrivateKey)      keyStore.getKey(keyAlias, pass.toCharArray());
+            X509Certificate cert  = (X509Certificate) keyStore.getCertificate(keyAlias);
+            
+
+            Document signedDoc = signerService.sign(doc, privateKey, cert);
+
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(signedDoc), new StreamResult(writer));
+            signedXml = writer.toString();
+
+        } catch (Exception e) {
+            LOG.error("Failed to sign document", e);
+            throw new BusinessException("Failed to sign payment XML: " + e.getMessage(), e);
+        }
+        
+
+        IpsSendPaymentRequestBo request = new IpsSendPaymentRequestBo();
+        request.setDocument(signedXml);
+        request.setSender("BKGFBIBIAXXX");
+        request.setReceiver("BRBUBIBAXIPS");
+        request.setTraceReference(senderReference);
+        request.setType("pacs.002.001.12");
+
+        return request;
+        
+    }
+
+/*
+    private IpsSendPaymentRequestBo buildPacs002Request(String xmlSenderBic,
+            String xmlReceiverBic,
+            String senderReference,
+            String origRef,
+            String origTm,
+            String createDate,
+            String settlementDate,
+            String ackStatus) {
+
+        // Clean dates
+        String createDt = stripTimezone(createDate);
+        String origCreDt = stripTimezone(origTm);
+
+
+        StringBuilder xml = new StringBuilder();
+
+
+        xml.append("<DataPDU xmlns=\"urn:cma:stp:xsd:stp.1.0\">")
+           .append("<Body>")
+
+           .append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">")
+
+               .append("<Fr>")
+                   .append("<FIId>")
+                       .append("<FinInstnId>")
+                           .append("<BICFI>").append(xmlSenderBic).append("</BICFI>")
+                       .append("</FinInstnId>")
+                   .append("</FIId>")
+               .append("</Fr>")
+
+               .append("<To>")
+                   .append("<FIId>")
+                       .append("<FinInstnId>")
+                           .append("<BICFI>BRBUBIBI</BICFI>")
+                       .append("</FinInstnId>")
+                   .append("</FIId>")
+               .append("</To>")
+
+               .append("<BizMsgIdr>").append(senderReference).append("</BizMsgIdr>")
+               .append("<MsgDefIdr>pacs.002.001.12</MsgDefIdr>")
+               .append("<BizSvc>brb.ips.01</BizSvc>")
+               .append("<CreDt>").append(createDt).append("+02:00</CreDt>")
+               .append("<Prty>0100</Prty>")
+
+           .append("</AppHdr>")
+
+           .append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.002.001.12\">")
+           .append("<FIToFIPmtStsRpt>")
+
+               .append("<GrpHdr>")
+                   .append("<MsgId>").append(senderReference).append("</MsgId>")
+                   .append("<CreDtTm>").append(createDt).append("+02:00</CreDtTm>")
+               .append("</GrpHdr>")
+
+               .append("<OrgnlGrpInfAndSts>")
+                   .append("<OrgnlMsgId>").append(origRef).append("</OrgnlMsgId>")
+                   .append("<OrgnlMsgNmId>pacs.008.001.10</OrgnlMsgNmId>")
+                   .append("<OrgnlCreDtTm>").append(origCreDt).append("</OrgnlCreDtTm>")
+                   .append("<StsRsnInf><Rsn><Prtry>").append(ackStatus).append("</Prtry></Rsn></StsRsnInf>");
+        xml.append("</OrgnlGrpInfAndSts>")
+
+           .append("<TxInfAndSts>")
+
+               .append("<OrgnlInstrId>").append(origRef).append("</OrgnlInstrId>")
+               .append("<OrgnlEndToEndId>NOTPROVIDED</OrgnlEndToEndId>")
+               .append("<OrgnlTxId>").append(origRef).append("</OrgnlTxId>")
+
+               .append("<InstgAgt>")
+                   .append("<FinInstnId>")
+                       .append("<BICFI>").append(xmlSenderBic).append("</BICFI>")
+                   .append("</FinInstnId>")
+               .append("</InstgAgt>")
+
+               .append("<InstdAgt>")
+                   .append("<FinInstnId>")
+                       .append("<BICFI>").append(xmlReceiverBic).append("</BICFI>")
+                   .append("</FinInstnId>")
+               .append("</InstdAgt>")
+
+               .append("<OrgnlTxRef>")
+                   .append("<IntrBkSttlmDt>").append(settlementDate).append("</IntrBkSttlmDt>")
+               .append("</OrgnlTxRef>")
+
+           .append("</TxInfAndSts>")
+
+           .append("</FIToFIPmtStsRpt>")
+           .append("</Document>")
+
+           .append("</Body>")
+           .append("</DataPDU>");
+        
+        
+
+        IpsSendPaymentRequestBo request = new IpsSendPaymentRequestBo();
+        request.setDocument(xml.toString());
+        request.setSender("BKGFBIBIAXXX");
+        request.setReceiver("BRBUBIBAXIPS");
+        request.setTraceReference(senderReference);
+        request.setType("pacs.002.001.12");
+
+        return request;
+        
+    }*/
+
+
+/*
+
+    private String buildPacs002Xml(
+            String xmlSenderBic,
+            String xmlReceiverBic,
+            String senderReference,
+            String origRef,
+            String origTm,
+            String createDate,
+            String settlementDate,
+            String ackStatus) {
+
+        // Strip any existing timezone from origTm to re-append +02:00
+        String origTmClean = stripTimezone(origTm);
+        String createDateClean = stripTimezone(createDate);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<DataPDU xmlns=\"urn:cma:stp:xsd:stp.1.0\">");
+        sb.append("<Body>");
+
+        // --- AppHdr ---
+        sb.append("<AppHdr xmlns=\"urn:iso:std:iso:20022:tech:xsd:head.001.001.02\">");
+        sb.append("<Fr><FIId><FinInstnId><BICFI>").append(xmlSenderBic).append("</BICFI></FinInstnId></FIId></Fr>");
+        sb.append("<To><FIId><FinInstnId><BICFI>").append(xmlReceiverBic).append("</BICFI></FinInstnId></FIId></To>");
+        sb.append("<BizMsgIdr>").append(senderReference).append("</BizMsgIdr>");
+        sb.append("<MsgDefIdr>pacs.002.001.12</MsgDefIdr>");
+        sb.append("<BizSvc>brb.ips.01</BizSvc>");
+        sb.append("<CreDt>").append(createDateClean).append("+02:00</CreDt>");
+        sb.append("<Prty>0100</Prty>");
+        sb.append("</AppHdr>");
+
+        // --- Document ---
+        sb.append("<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.002.001.12\">");
+        sb.append("<FIToFIPmtStsRpt>");
+
+        // GrpHdr
+        sb.append("<GrpHdr>");
+        sb.append("<MsgId>").append(senderReference).append("</MsgId>");
+        sb.append("<CreDtTm>").append(createDateClean).append("+02:00</CreDtTm>");
+        sb.append("</GrpHdr>");
+
+        // OrgnlGrpInfAndSts
+        sb.append("<OrgnlGrpInfAndSts>");
+        sb.append("<OrgnlMsgId>").append(origRef).append("</OrgnlMsgId>");
+        sb.append("<OrgnlMsgNmId>pacs.008.001.10</OrgnlMsgNmId>");
+        sb.append("<OrgnlCreDtTm>").append(origTmClean).append("+02:00</OrgnlCreDtTm>");
+        sb.append("<StsRsnInf><Rsn><Prtry>").append(ackStatus).append("</Prtry></Rsn></StsRsnInf>");
+        sb.append("</OrgnlGrpInfAndSts>");
+
+        // TxInfAndSts
+        sb.append("<TxInfAndSts>");
+        sb.append("<OrgnlInstrId>").append(origRef).append("</OrgnlInstrId>");
+        sb.append("<OrgnlEndToEndId>NOTPROVIDED</OrgnlEndToEndId>");
+        sb.append("<OrgnlTxId>").append(origRef).append("</OrgnlTxId>");
+        sb.append("<InstgAgt><FinInstnId><BICFI>").append(xmlSenderBic).append("</BICFI></FinInstnId></InstgAgt>");
+        sb.append("<InstdAgt><FinInstnId><BICFI>").append(xmlReceiverBic).append("</BICFI></FinInstnId></InstdAgt>");
+        sb.append("<OrgnlTxRef><IntrBkSttlmDt>").append(settlementDate).append("</IntrBkSttlmDt></OrgnlTxRef>");
+        sb.append("</TxInfAndSts>");
+
+        sb.append("</FIToFIPmtStsRpt>");
+        sb.append("</Document>");
+        sb.append("</Body>");
+        sb.append("</DataPDU>");
+
+        return sb.toString();
+    }
+*/
+
+    private String currentIso8601() {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date());
+    }
+
+    private String stripTimezone(String datetime) {
+        if (datetime == null || datetime.isEmpty()) return "";
+        // Remove +HH:MM or -HH:MM suffix
+        return datetime.trim().replaceAll("[+-]\\d{2}:\\d{2}$", "");
+    }
+
+
+    private String generateMessageId() {
+        String ts = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        int rand  = (int)(Math.random() * 99999);
+        return "T" + ts + String.format("%05d", rand);
+    }
+
+    // =========================================================================
+    // XML PARSING
+    // =========================================================================
 
     public static Map<String, String> extractPacs008Fields(String documentXml) throws Exception {
         Map<String, String> result = new HashMap<>();
@@ -278,60 +664,38 @@ public class IncomingIpsService {
             @Override public java.util.Iterator getPrefixes(String uri) { return null; }
         });
 
-        // AppHdr
-        result.put("bizMsgIdr",     safeXpath(xpath, "//h:AppHdr/h:BizMsgIdr", doc));
-        result.put("fromBic",       safeXpath(xpath, "//h:AppHdr/h:Fr/h:FIId/h:FinInstnId/h:BICFI", doc));
-        result.put("toBic",         safeXpath(xpath, "//h:AppHdr/h:To/h:FIId/h:FinInstnId/h:BICFI", doc));
-        result.put("creationDate",  safeXpath(xpath, "//h:AppHdr/h:CreDt", doc));
-        result.put("bizProcDate",   safeXpath(xpath, "//h:AppHdr/h:BizPrcgDt", doc));
-
-        // GrpHdr
-        result.put("msgId",         safeXpath(xpath, "//p:GrpHdr/p:MsgId", doc));
-        result.put("creDtTm",       safeXpath(xpath, "//p:GrpHdr/p:CreDtTm", doc));
-
-        // PmtId
-        result.put("instrId",       safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:InstrId", doc));
-        result.put("endToEndId",    safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:EndToEndId", doc));
-        result.put("txId",          safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:TxId", doc));
-        result.put("uetr",          safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:UETR", doc));
-
-        // PmtTpInf
+        result.put("bizMsgIdr",       safeXpath(xpath, "//h:AppHdr/h:BizMsgIdr", doc));
+        result.put("fromBic",         safeXpath(xpath, "//h:AppHdr/h:Fr/h:FIId/h:FinInstnId/h:BICFI", doc));
+        result.put("toBic",           safeXpath(xpath, "//h:AppHdr/h:To/h:FIId/h:FinInstnId/h:BICFI", doc));
+        result.put("creationDate",    safeXpath(xpath, "//h:AppHdr/h:CreDt", doc));
+        result.put("msgId",           safeXpath(xpath, "//p:GrpHdr/p:MsgId", doc));
+        result.put("creDtTm",         safeXpath(xpath, "//p:GrpHdr/p:CreDtTm", doc));
+        result.put("instrId",         safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:InstrId", doc));
+        result.put("endToEndId",      safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:EndToEndId", doc));
+        result.put("txId",            safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:TxId", doc));
+        result.put("uetr",            safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtId/p:UETR", doc));
         result.put("clearingChannel", safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtTpInf/p:ClrChanl", doc));
         result.put("localInstrument", safeXpath(xpath, "//p:CdtTrfTxInf/p:PmtTpInf/p:LclInstrm/p:Prtry", doc));
-
-        // Montant & devise
-        result.put("amount",   safeXpath(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmAmt", doc));
-        result.put("currency", safeXpathAttr(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmAmt/@Ccy", doc));
-        result.put("settlementDate", safeXpath(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmDt", doc));
-
-        // Agents
-        result.put("instgAgt", getFinInstId(xpath, "//p:CdtTrfTxInf/p:InstgAgt/p:FinInstnId", doc));
-        result.put("instdAgt", getFinInstId(xpath, "//p:CdtTrfTxInf/p:InstdAgt/p:FinInstnId", doc));
-        result.put("dbtrAgt",  getFinInstId(xpath, "//p:CdtTrfTxInf/p:DbtrAgt/p:FinInstnId", doc));
-        result.put("cdtrAgt",  getFinInstId(xpath, "//p:CdtTrfTxInf/p:CdtrAgt/p:FinInstnId", doc));
-
-        // Débiteur
-        result.put("debtorName",    safeXpath(xpath, "//p:CdtTrfTxInf/p:Dbtr/p:Nm", doc));
-        result.put("debtorAccount", safeXpath(xpath, "//p:CdtTrfTxInf/p:DbtrAcct/p:Id/p:Othr/p:Id", doc));
-
-        // Créditeur
+        result.put("amount",          safeXpath(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmAmt", doc));
+        result.put("currency",        safeXpathAttr(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmAmt/@Ccy", doc));
+        result.put("settlementDate",  safeXpath(xpath, "//p:CdtTrfTxInf/p:IntrBkSttlmDt", doc));
+        result.put("instgAgt",        getFinInstId(xpath, "//p:CdtTrfTxInf/p:InstgAgt/p:FinInstnId", doc));
+        result.put("instdAgt",        getFinInstId(xpath, "//p:CdtTrfTxInf/p:InstdAgt/p:FinInstnId", doc));
+        result.put("dbtrAgt",         getFinInstId(xpath, "//p:CdtTrfTxInf/p:DbtrAgt/p:FinInstnId", doc));
+        result.put("cdtrAgt",         getFinInstId(xpath, "//p:CdtTrfTxInf/p:CdtrAgt/p:FinInstnId", doc));
+        result.put("debtorName",      safeXpath(xpath, "//p:CdtTrfTxInf/p:Dbtr/p:Nm", doc));
+        result.put("debtorAccount",   safeXpath(xpath, "//p:CdtTrfTxInf/p:DbtrAcct/p:Id/p:Othr/p:Id", doc));
         result.put("creditorName",    safeXpath(xpath, "//p:CdtTrfTxInf/p:Cdtr/p:Nm", doc));
         result.put("creditorAccount", safeXpath(xpath, "//p:CdtTrfTxInf/p:CdtrAcct/p:Id/p:Othr/p:Id", doc));
-
-        // Purpose
-        result.put("purpose", safeXpath(xpath, "//p:CdtTrfTxInf/p:Purp/p:Prtry", doc));
-
-        // Remittance
-        result.put("remittanceInfo", safeXpath(xpath, "//p:CdtTrfTxInf/p:RmtInf/p:Ustrd", doc));
+        result.put("purpose",         safeXpath(xpath, "//p:CdtTrfTxInf/p:Purp/p:Prtry", doc));
+        result.put("remittanceInfo",  safeXpath(xpath, "//p:CdtTrfTxInf/p:RmtInf/p:Ustrd", doc));
 
         return result;
     }
 
     private static String getFinInstId(XPath xpath, String basePath, Document doc) {
         String bicfi = safeXpath(xpath, basePath + "/p:BICFI", doc);
-        if (bicfi != null && !bicfi.isEmpty()) {
-            return bicfi;
-        }
+        if (bicfi != null && !bicfi.isEmpty()) return bicfi;
         return safeXpath(xpath, basePath + "/p:ClrSysMmbId/p:MmbId", doc);
     }
 
@@ -339,87 +703,92 @@ public class IncomingIpsService {
         try {
             String value = xpath.evaluate(expression, doc);
             return value != null ? value.trim() : "";
-        } catch (Exception e) {
-            return "";
-        }
+        } catch (Exception e) { return ""; }
     }
 
     private static String safeXpathAttr(XPath xpath, String expression, Document doc) {
         return safeXpath(xpath, expression, doc);
     }
-    
-    /**
-     * Builds a WalletPaymentBo from the data extracted from an ISO 20022 pacs.008 message.
-     *
-     * txData keys expected (extracted via XPath from pacs.008):
-     *   - traceReference     : End-to-end transaction reference
-     *   - creditorAccount    : IBAN/account number of the creditor (receiver)
-     *   - debtorAccount      : IBAN/account number of the debtor (sender)
-     *   - amount             : Transaction amount as String (e.g. "500.00")
-     *   - currency           : ISO 4217 currency code (e.g. "333" or "USD")
-     *   - debtorName         : Full name of the sender
-     *   - creditorName       : Full name of the receiver
-     *   - remittanceInfo     : Payment description/reason
-     *   - walletDestination  : Wallet ID / phone number of the destination wallet
-     */
-    private WalletPaymentBo buildPaymentFromIsoData(Map<String, String> txData) {
 
-        WalletPaymentBo payment = new WalletPaymentBo();
+    // =========================================================================
+    // PAYMENT BUILDER
+    // =========================================================================
 
-        // -- Core transaction fields (from PaymentBo parent) --
-        payment.setAmount(
-            parseAmount(txData.get("amount"))
-        );
-        payment.setCurrency(
-            txData.get("currency")
-        );
-        payment.setAcquirerTrxRef(
-            txData.get("traceReference")
-        );
-        payment.setDescription(
-            txData.getOrDefault("remittanceInfo", "IPS Incoming Transfer")
-        );
+    private Payment buildPaymentFromIsoData(Map<String, String> txData) throws BusinessException {
+        Payment payment = new Payment();
+
+        payment.setAmount(parseAmount(txData.get("amount")));
+        payment.setCurrency("108");
+        payment.setAcquirerTrxRef(txData.get("traceReference"));
+        payment.setDescription(txData.getOrDefault("remittanceInfo", "IPS Incoming Transfer"));
         payment.setCreateTime(new Date());
 
-        // -- Account fields --
-        // The creditor account is the receiver's account in our system
-        payment.setFromAccountNumber(
-            txData.get("creditorAccount")
-        );
-        payment.setAccountNumber(
-            txData.getOrDefault("creditorAccount", "")
-        );
+        String purpose = txData.get("purpose");
 
-        // -- Wallet routing --
-        // walletDestination = the wallet ID/phone of the receiver
-        payment.setWalletDestination(
-            txData.get("walletDestination")
-        );
+        if ("001".equals(purpose)) {
+            List<AccountInfo> srcAccounts = new ArrayList<>();
+            List<AccountInfo> dstAccounts = new ArrayList<>();
+            AccountInfo accountSrc = new AccountInfo();
+            AccountInfo accountDst = new AccountInfo();
+            
+            accountSrc.setIden(txData.get("debtorAccount"));
+            accountSrc.setName(txData.get("debtorName"));
+            accountSrc.setType("ACCOUNT");
+            
+            accountDst.setIden(txData.get("creditorAccount"));
+            accountDst.setName(txData.get("creditorName"));
+            accountDst.setType("ACCOUNT");
+            srcAccounts.add(accountSrc);
+            dstAccounts.add(accountDst);
+            
+            payment.setSrcAccounts(srcAccounts);
+            payment.setDstAccounts(dstAccounts);
+            payment.setIntent("inst_account_transf");
 
-        // -- Intent and handler (fixed values for IPS incoming) --
-        payment.setIntent("inst_mobile_transfer");
-        payment.setSendSourceHandler("BRB_IPS");
+        } else if ("002".equals(purpose) ) {
+        	List<AccountInfo> srcAccounts = new ArrayList<>();
+        	AccountInfo accountSrc = new AccountInfo();
+        	accountSrc.setIden(txData.get("debtorAccount"));
+            accountSrc.setName(txData.get("debtorName"));
+            srcAccounts.add(accountSrc);
+            payment.setSrcAccounts(srcAccounts);
+            payment.setWalletSource(txData.get("debtorAccount"));
+            payment.setWalletDestination(txData.get("creditorAccount"));
+            payment.setIntent("inst_mobile_transfer");
 
-        // -- Commission --
-        payment.setIsCommissionIncluded(false);
-
-        // -- Optional: member ID if available in txData --
-        if (txData.get("toMember") != null) {
-            payment.setToMember(txData.get("toMember"));
+        } 
+        else if("003".equals(purpose)) {
+        	List<AccountInfo> dstAccounts = new ArrayList<>();
+        	AccountInfo accountDst = new AccountInfo();
+        	accountDst.setIden(txData.get("creditorAccount"));
+        	accountDst.setType("ACCOUNT");
+        	accountDst.setName(txData.get("creditorName"));
+        	dstAccounts.add(accountDst);
+            payment.setDstAccounts(dstAccounts);
+            payment.setWalletSource(txData.get("debtorAccount"));
+            payment.setIntent("inst_wallet_to_acc");
+        }
+        else if("007".equals(purpose)) {
+        	//TODO ADD this cas
+        }
+        else {
+            LOG.info("Unknown purpose code: " + purpose + " - defaulting to wallet transfer.");
+            throw new BusinessException("Unknown purpose code "+purpose);
         }
 
-        LOG.debug("Built WalletPaymentBo from IPS data: " + payment.toString());
+        payment.setVoucherCode(CoreUtil.generateVoucher("AN", 9));
+        payment.setSendSourceHandler("BRB_IPS");
+        payment.setState("ACCEPTED");
+        payment.setToMember("20005");
+        payment.setFromMember("BRBUBIBAIPS");
 
+        LOG.debug("Built WalletPaymentBo from IPS data: " + payment.toString());
         return payment;
     }
 
-    /**
-     * Safely parses amount string to Double.
-     * Returns 0.0 if null or invalid.
-     */
     private Double parseAmount(String amountStr) {
         if (amountStr == null || amountStr.trim().isEmpty()) {
-            LOG.warn("Amount is null or empty in ISO 20022 data, defaulting to 0.0");
+            LOG.warn("Amount is null or empty, defaulting to 0.0");
             return 0.0;
         }
         try {
@@ -430,74 +799,151 @@ public class IncomingIpsService {
         }
     }
 
-    
-    private void sendToWalletCoreBackend(Map<String, String> txData, String accessToken) throws Exception {
+    // =========================================================================
+    // WALLET CORE CALL
+    // =========================================================================
 
-        // ============================================
-        // 1. BUILD THE WalletPaymentBo FROM ISO 20022
-        // ============================================
-        WalletPaymentBo payment = buildPaymentFromIsoData(txData);
+    private void sendToWalletCoreBackend(Map<String, String> txData, String accessToken) {
 
+        Payment paymentResponse = null;   // stays null on failure
+        String  ackStatus       = "NAUT"; // safe default: rejected
 
-        // ============================================
-        // 3. BUILD AND SEND THE HTTP REQUEST
-        // ============================================
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + accessToken);
+        try {
+        	Payment payment = buildPaymentFromIsoData(txData);
 
-        WebRequest req = new WebRequest();
-        req.setAcceptType(acceptType);
-        req.setMediaType(mediaTypeJson);
-        req.setHeader(headers);
-        req.setReadTimeout(readTimeout);
-        req.setConnectTimeout(connectTimeout);
-        req.setUrl(urlIncomingCreate);
-        req.setQueryMethod(QUERY_METHOD.POST);
-        req.setBody(payment); 
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + accessToken);
 
-        WebInterface.processRequest(req);
+            WebRequest req = new WebRequest();
+            req.setAcceptType(acceptType);
+            req.setMediaType(mediaTypeJson);
+            req.setHeader(headers);
+            req.setReadTimeout(readTimeout);
+            req.setConnectTimeout(connectTimeout);
+            req.setUrl(urlIncomingCreate);
+            req.setQueryMethod(QUERY_METHOD.POST);
+            req.setBody(payment);
 
-        // ============================================
-        // 4. HANDLE RESPONSE
-        // ============================================
-        int code = req.getResponse().getResponseCode();
-        String responseMsg = req.getResponse().getResponseMsg();
+            WebInterface.processRequest(req);
 
-        if (code != 200 && code != 201) {
-            LOG.error("WalletCore rejected incoming IPS transaction."
-                    + " HTTP=" + code
-                    + ", traceRef=" + txData.get("traceReference")
-                    + ", creditorAccount=" + txData.get("creditorAccount")
-                    + ", response=" + responseMsg);
-            throw new BusinessException(
-                    "WalletCore rejected incoming IPS transaction HTTP " + code
-                    + " | ref=" + txData.get("traceReference"));
+            int    code    = req.getResponse().getResponseCode();
+            String respMsg = req.getResponse().getResponseMsg();
+
+            if (code != 200 && code != 201) {
+                LOG.error("WalletCore rejected incoming IPS transaction."
+                        + " HTTP="      + code
+                        + ", traceRef=" + txData.get("traceReference")
+                        + ", response=" + respMsg);
+                ackStatus="NAUT";
+            } else {
+                // Happy path: parse the response and derive the real ack status
+                ObjectMapper objectMapper = new ObjectMapper();
+                paymentResponse = objectMapper.readValue(respMsg, Payment.class);
+                ackStatus       = resolveAckStatus(paymentResponse);
+
+                LOG.info("Incoming IPS transaction successfully sent to WalletCore:"
+                        + " traceRef=" + txData.get("traceReference")
+                        + ", amount="  + txData.get("amount") + " " + txData.get("currency")
+                        + ", state="   + paymentResponse.getState());
+            }
+
+        } catch (Exception e) {
+            LOG.error("Exception while sending transaction to WalletCore."
+                    + " traceRef=" + txData.getOrDefault("traceReference", "UNKNOWN"), e);
+            ackStatus="NAUT";
+        } finally {
+            sendPacs002Acknowledgment(txData, ackStatus);
         }
-
-        LOG.info("Incoming IPS transaction successfully sent to WalletCore:"
-                + " traceRef=" + txData.get("traceReference")
-                + ", creditorAccount=" + txData.get("creditorAccount")
-                + ", amount=" + txData.get("amount")
-                + " " + txData.get("currency"));
     }
+
+
+    private String resolveAckStatus(Payment paymentResponse) {
+        if (paymentResponse == null || paymentResponse.getState() == null) {
+            return "NAUT";
+        }
+        switch (paymentResponse.getState().toUpperCase()) {
+            case "ACCEPTED": return "AUTH";
+            case "SUSPECTED":  return "SUSP";
+            default:         return "NAUT";
+        }
+    }
+
+
+    public void sendPacs002Acknowledgment(Map<String, String> txData, String ackStatus) {
+        try {
+            // Retrieve required data from txData
+            String traceReference = txData.getOrDefault("traceReference", "");
+            String senderReference = generateMessageId();
+            String origRef = txData.getOrDefault("msgId", traceReference);
+            String origTm = txData.getOrDefault("creDtTm", "");
+            String createDate = currentIso8601();
+            String settlementDate = txData.getOrDefault("settlementDate", createDate.substring(0, 10));
+            String xmlSenderBic = "BKGFBIBI";
+            String xmlReceiverBic = txData.getOrDefault("instgAgt", "");;
+
+            if (ackStatus == null) {
+                ackStatus = "NAUT";
+            }
+
+            // Build the request object for pacs.002
+            IpsSendPaymentRequestBo request = buildPacs002Request(
+                    xmlSenderBic,
+                    xmlReceiverBic,
+                    senderReference,
+                    origRef,
+                    origTm,
+                    createDate,
+                    settlementDate,
+                    ackStatus
+            );
+
+            
+            // Send the request to the IPS API
+            String uuid = UUID.randomUUID().toString();
+            String url = ipsInputUrl + uuid + "?service=ips";
+
+            WebRequest req = new WebRequest();
+            req.setUrl(url);
+            req.setQueryMethod(QUERY_METHOD.POST);
+            req.setAcceptType("application/json");
+            req.setMediaType("application/json");
+            req.setReadTimeout(readTimeout);
+            req.setConnectTimeout(connectTimeout);
+            req.setHeader(tokenService.buildBearerHeader(tokenService.getAccessToken()));
+            req.setBody(request);
+
+            WebInterface.processRequest(req);
+
+            int code = req.getResponse().getResponseCode();
+            String respBody = req.getResponse().getResponseMsg();
+
+            if (code == 200 || code == 201 || code == 202) {
+                LOG.info("pacs.002 acknowledgment accepted by IPS. HTTP=" + code + ", traceRef=" + traceReference);
+            } else {
+                LOG.error("IPS rejected pacs.002 acknowledgment. HTTP=" + code + ", response=" + respBody);
+            }
+
+        } catch (Exception e) {
+            LOG.error("Failed to send pacs.002 acknowledgment for traceRef=" + txData.getOrDefault("traceReference", "UNKNOWN"), e);
+        }
+    }
+
+
+
+
+    // =========================================================================
+    // TOKEN
+    // =========================================================================
 
     private String getWalletCoreAccessToken() throws Exception {
         WebRequest tokenRequest = buildTokenRequest();
         WebInterface.processRequest(tokenRequest);
-
         if (tokenRequest.getResponse().getResponseCode() != 200) {
-            LOG.error("WalletCoreAuthentication :: error getting access token: "
-                    + tokenRequest.getResponse());
             throw new BusinessException("Error getting WalletCore access token");
         }
-
-        String tokenJson = tokenRequest.getResponse().getResponseMsg();
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode tokenNode = mapper.readTree(tokenJson);
-        String accessToken = tokenNode.get("access_token").asText();
-
-        LOG.info("WalletCore access token obtained successfully");
-        return accessToken;
+        JsonNode tokenNode = mapper.readTree(tokenRequest.getResponse().getResponseMsg());
+        return tokenNode.get("access_token").asText();
     }
 
     private WebRequest buildTokenRequest() {
@@ -511,6 +957,10 @@ public class IncomingIpsService {
         req.setBody("grant_type=password&client_id=restapp&client_secret=restapp&scope=read&username=ips&password=payway100");
         return req;
     }
+
+    // =========================================================================
+    // REST TRIGGER
+    // =========================================================================
 
     public ResponseEntity<String> pollAndProcessIncoming() {
         try {

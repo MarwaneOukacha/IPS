@@ -2,6 +2,10 @@ package com.paylogic.ips.services;
 
 
 import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -9,6 +13,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,8 +35,17 @@ public class TokenService {
 
     private static final Logger LOG = Logger.getLogger(TokenService.class);
 
-    @Value("${crtPath}")
-    private String crtPath;
+
+    @Value("${ips.signing.keystoreFile}")
+    private String keystoreFile;
+
+    @Value("${ips.signing.keystorePass}")
+    private String keystorePass;
+
+    @Value("${ips.signing.keyAlias}")
+    private String keyAlias;
+
+    private KeyStore keyStore;
 
     @Value("${casAuthUrl}")
     private String casAuthUrl;
@@ -55,10 +70,23 @@ public class TokenService {
 
     @Value("${senderBic}")
     private String senderBic;
+    
+    @PostConstruct
+    private void initKeyStore() {
+        try {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(
+                Files.newInputStream(Paths.get(keystoreFile)),
+                keystorePass.toCharArray()
+            );
+            this.keyStore = ks;
+            LOG.info("TokenService keystore loaded OK");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load keystore in TokenService", e);
+        }
+    }
 
-    /** =========================================================================
-     *   GET ACCESS TOKEN (used by CAS + OutgoingIPS if needed)
-     *  ========================================================================= */
+
     public String getAccessToken() throws BusinessException {
 
         WebRequest request = buildTokenRequest();
@@ -82,9 +110,7 @@ public class TokenService {
         return response.getAccessToken();
     }
 
-    /** =========================================================================
-     *   GENERATE CLIENT JWT (shared by all services)
-     *  ========================================================================= */
+
     public String generateClientToken() throws BusinessException {
         try {
             X509Certificate cert = loadCertificate();
@@ -98,13 +124,13 @@ public class TokenService {
             JwsObject jws = new JwsObject(header);
             jws.setPayload(new ObjectMapper().writeValueAsString(payload));
 
-            String publicKey = StringUtil.formatData(
-                    cert.getPublicKey().getEncoded(),
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, keystorePass.toCharArray());
+            String privateKeyBase64 = StringUtil.formatData(
+                    privateKey.getEncoded(),
                     StringUtil.DataType.BASE64_FORMAT,
                     StringUtil.DEFAULT_ENCODING
             ).replaceAll("\\s+", "");
-
-            JwsHelper.getInstance().sign(jws, publicKey);
+            JwsHelper.getInstance().sign(jws, privateKeyBase64);
 
             return JwsHelper.getInstance().encodeObject(jws);
 
@@ -114,9 +140,6 @@ public class TokenService {
         }
     }
 
-    /* ========================================================================== */
-    /* PRIVATE METHODS */
-    /* ========================================================================== */
 
     private WebRequest buildTokenRequest() throws BusinessException {
         WebRequest request = new WebRequest();
@@ -138,13 +161,12 @@ public class TokenService {
         headers.put("X-Request-ID", UUID.randomUUID().toString());
         return headers;
     }
+
     private X509Certificate loadCertificate() throws Exception {
-        try (FileInputStream fis = new FileInputStream(crtPath)) {
-            return (X509Certificate) CertificateFactory
-                    .getInstance("X.509")
-                    .generateCertificate(fis);
-        }
+        return (X509Certificate) keyStore.getCertificate(keyAlias);
     }
+    
+    
     
     
 

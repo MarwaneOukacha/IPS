@@ -1,5 +1,6 @@
 package com.paylogic.ips.util;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -12,9 +13,15 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gms.utils.common.DateUtil;
 import com.gms.utils.common.Pair;
 import com.gms.utils.common.StringUtil;
+import com.gms.utils.exception.BusinessException;
+import com.gms.utils.net.webinterface.WebInterface;
+import com.gms.utils.net.webinterface.WebRequest;
+import com.gms.utils.net.webinterface.WebRequest.QUERY_METHOD;
 import com.paylogic.ama.core.model.AccountInfo;
 import com.paylogic.ama.core.model.ParameterCategory;
 import com.paylogic.ama.core.model.Payment;
@@ -106,4 +113,15 @@ public class CoreUtil extends BaseCoreUtil{
 			return null;
 		}
 	}
+	
+	private void validateRequired(String value, String fieldName)
+            throws BusinessException {
+
+        if (value == null || value.trim().isEmpty()) {
+
+            throw new BusinessException(fieldName + " is required");
+        }
+    }
+    
+    
 }
